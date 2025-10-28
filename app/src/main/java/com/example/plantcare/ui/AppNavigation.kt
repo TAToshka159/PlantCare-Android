@@ -9,6 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.example.plantcare.data.isOnboardingCompleted
+import com.example.plantcare.data.saveOnboardingCompleted
 import com.example.plantcare.ui.screens.HomeScreen
 import com.example.plantcare.ui.screens.LoginScreen
 import com.example.plantcare.ui.screens.RegisterScreen
@@ -24,7 +25,13 @@ fun AppNavigation(modifier: Modifier = Modifier) {
     }
 
     if (onboardingCompleted) {
-        HomeScreen(modifier = modifier)
+        HomeScreen(
+            onReturnToOnboarding = {
+                context.saveOnboardingCompleted(false)
+                onboardingCompleted = false
+            },
+            modifier = modifier
+        )
     } else {
         var currentScreen by remember { mutableStateOf<OnboardingDestination>(OnboardingDestination.Register) }
 

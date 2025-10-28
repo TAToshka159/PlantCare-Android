@@ -7,6 +7,7 @@ private const val PREF_NAME = "app_prefs"
 private const val KEY_ONBOARDING_COMPLETED = "onboarding_completed"
 private const val KEY_USER_NAME = "user_name"
 private const val KEY_USER_PASSWORD = "user_password"
+private const val KEY_CURRENT_USER_ID = "current_user_id"
 
 /**
  * Проверяет, прошёл ли пользователь онбординг
@@ -54,4 +55,17 @@ fun Context.saveUserPassword(password: String) {
 fun Context.getUserPassword(): String {
     return getSharedPreferences(PREF_NAME, MODE_PRIVATE)
         .getString(KEY_USER_PASSWORD, "") ?: ""
+}
+
+fun Context.saveCurrentUserId(userId: Long) {
+    getSharedPreferences(PREF_NAME, MODE_PRIVATE)
+        .edit()
+        .putLong(KEY_CURRENT_USER_ID, userId)
+        .apply()
+}
+
+// Получение ID текущего пользователя
+fun Context.getCurrentUserId(): Long {
+    return getSharedPreferences(PREF_NAME, MODE_PRIVATE)
+        .getLong(KEY_CURRENT_USER_ID, -1) // -1 = гость или не авторизован
 }

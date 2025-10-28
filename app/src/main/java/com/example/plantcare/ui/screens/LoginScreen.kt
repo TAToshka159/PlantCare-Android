@@ -1,10 +1,24 @@
 // ui/screens/LoginScreen.kt
 package com.example.plantcare.ui.screens
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -12,7 +26,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.plantcare.data.*
+import com.example.plantcare.PlantCareApplication
+import com.example.plantcare.data.PasswordUtils
+import com.example.plantcare.data.saveCurrentUserId
+import com.example.plantcare.data.saveOnboardingCompleted
+import com.example.plantcare.data.saveUserName
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
@@ -21,6 +40,8 @@ fun LoginScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
     var login by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
@@ -63,20 +84,25 @@ fun LoginScreen(
 
         Button(
             onClick = {
-                val savedLogin = context.getUserName()
-                val savedPassword = context.getUserPassword()
-
-                // Гость не может войти через экран входа
-                if (savedLogin == "Гость") {
-                    error = "Такой пользователь не существует"
+                if (login.isEmpty() || password.isEmpty()) {
+                    error = "Заполните все поля"
                     return@Button
                 }
 
-                if (login == savedLogin && password == savedPassword) {
-                    context.saveOnboardingCompleted(true)
-                    onLoginSuccess()
-                } else {
-                    error = "Такой пользователь не существует"
+                coroutineScope.launch {
+                    val app = context.applicationContext as PlantCareApplication
+                    val dao = app.database.plantCareDao()
+                    val user = dao.getUserByLogin(login)
+                    val enteredHash = PasswordUtils.hashPassword(password)
+
+                    if (user != null && user.passwordHash == enteredHash) {
+                        context.saveCurrentUserId(user.id)
+                        context.saveUserName(user.login)
+                        context.saveOnboardingCompleted(true)
+                        onLoginSuccess()
+                    } else {
+                        error = "Такой пользователь не существует"
+                    }
                 }
             },
             modifier = Modifier

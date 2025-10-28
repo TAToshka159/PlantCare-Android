@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.statusBars
 @Composable
 fun HomeScreen(
     onAddPlantClick: () -> Unit = {},
+    onReturnToOnboarding: () -> Unit = {}, // ← ДОБАВЛЕНО
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -62,7 +63,16 @@ fun HomeScreen(
                 )
             }
         }
-
+        // 🔴 ТЕСТОВАЯ КНОПКА — ВРЕМЕННО!
+        OutlinedButton(
+            onClick = onReturnToOnboarding,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Text("Вернуться к входу (тест)", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
         // Кнопка добавления
         Button(
             onClick = onAddPlantClick,

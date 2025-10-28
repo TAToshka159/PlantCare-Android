@@ -13,9 +13,10 @@ import com.example.plantcare.data.database.entity.*
         CareEvent::class,
         EncyclopediaEntry::class,
         Photo::class,
-        PlantStatus::class
+        PlantStatus::class,
+        User::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

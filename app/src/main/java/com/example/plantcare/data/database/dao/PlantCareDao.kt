@@ -3,6 +3,7 @@ package com.example.plantcare.data.database.dao
 import androidx.room.*
 import com.example.plantcare.data.database.entity.*
 import kotlinx.coroutines.flow.Flow
+import com.example.plantcare.data.database.entity.User
 
 @Dao
 interface PlantCareDao {
@@ -32,4 +33,14 @@ interface PlantCareDao {
     // Plant Status
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertPlantStatus(status: PlantStatus)
+
+    // Users
+    @Query("SELECT * FROM users WHERE login = :login")
+    suspend fun getUserByLogin(login: String): User?
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertUser(user: User): Long
+
+    @Query("SELECT * FROM users")
+    suspend fun getAllUsers(): List<User>
 }

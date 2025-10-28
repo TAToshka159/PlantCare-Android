@@ -3,10 +3,12 @@
     package="com.example.plantcare">
 
     <application
+        android:name=".PlantCareApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="PlantCare+"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+
 
         <activity
             android:name=".MainActivity"
