@@ -43,4 +43,37 @@ interface PlantCareDao {
 
     @Query("SELECT * FROM users")
     suspend fun getAllUsers(): List<User>
+
+
+    @Query("SELECT * FROM plants WHERE userId = :userId")
+    fun getPlantsByUser(userId: Long): Flow<List<Plant>>
+
+    @Query("SELECT * FROM plants WHERE id = :plantId")
+    suspend fun getPlantById(plantId: Long): Plant?
+
+    @Query("SELECT * FROM care_events WHERE plantId = :plantId ORDER BY datePlanned ASC LIMIT 2")
+    suspend fun getUpcomingCareEvents(plantId: Long): List<CareEvent>
+
+    @Update
+    suspend fun updatePlant(plant: Plant)
+
+    @Transaction
+    suspend fun deletePlantAndRelatedData(plantId: Long) {
+        deleteCareEventsByPlant(plantId)
+        deletePhotosByPlant(plantId)
+        deletePlantStatusByPlant(plantId)
+        deletePlantById(plantId)
+    }
+
+    @Query("DELETE FROM care_events WHERE plantId = :plantId")
+    suspend fun deleteCareEventsByPlant(plantId: Long)
+
+    @Query("DELETE FROM photos WHERE plantId = :plantId")
+    suspend fun deletePhotosByPlant(plantId: Long)
+
+    @Query("DELETE FROM plant_status WHERE plantId = :plantId")
+    suspend fun deletePlantStatusByPlant(plantId: Long)
+
+    @Query("DELETE FROM plants WHERE id = :plantId")
+    suspend fun deletePlantById(plantId: Long)
 }

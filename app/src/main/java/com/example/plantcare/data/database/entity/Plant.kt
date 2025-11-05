@@ -6,9 +6,12 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "plants")
 data class Plant(
     @PrimaryKey val id: Long = 0,
+    val userId: Long,
     val name: String,
     val type: String,
     val photoUri: String?,
     val room: String,
-    val createdAt: Long
+    val createdAt: Long,
+    val wateringInterval: Int = 3,
+    val fertilizingInterval: Int = 30
 )
