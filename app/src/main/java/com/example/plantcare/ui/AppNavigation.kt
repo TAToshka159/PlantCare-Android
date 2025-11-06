@@ -17,13 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.example.plantcare.data.isOnboardingCompleted
 import com.example.plantcare.data.saveOnboardingCompleted
-import com.example.plantcare.ui.screens.AddPlantScreen
-import com.example.plantcare.ui.screens.EditPlantScreen
-import com.example.plantcare.ui.screens.HomeScreen
-import com.example.plantcare.ui.screens.LoginScreen
-import com.example.plantcare.ui.screens.PlantDetailScreen
-import com.example.plantcare.ui.screens.RegisterScreen
-import com.example.plantcare.PlantCareApplication
+import com.example.plantcare.ui.screens.*
 
 @Composable
 fun AppNavigation(modifier: Modifier = Modifier) {
@@ -83,13 +77,27 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             PlantDetailScreen(
                 plantId = plantId,
                 onBack = { currentDestination = AppDestination.Home },
-                onEdit = { currentDestination = AppDestination.EditPlant(plantId) }
+                onEdit = { currentDestination = AppDestination.EditPlant(plantId) },
+                onPhotoClick = { photoUris, index ->
+                    currentDestination = AppDestination.FullScreenPhoto(
+                        plantId = plantId,
+                        photoUris = photoUris,
+                        initialPage = index
+                    )
+                }
             )
         }
         is AppDestination.EditPlant -> {
             EditPlantScreen(
                 plantId = destination.plantId,
                 onPlantUpdated = { currentDestination = AppDestination.Home }
+            )
+        }
+        is AppDestination.FullScreenPhoto -> {
+            FullScreenPhotoScreen(
+                photoUris = destination.photoUris,
+                initialPage = destination.initialPage,
+                onBack = { currentDestination = AppDestination.PlantDetail(destination.plantId) }
             )
         }
     }
@@ -102,4 +110,9 @@ private sealed interface AppDestination {
     object AddPlant : AppDestination
     data class PlantDetail(val plantId: Long) : AppDestination
     data class EditPlant(val plantId: Long) : AppDestination
+    data class FullScreenPhoto(
+        val plantId: Long,          // ← КЛЮЧЕВОЕ ИЗМЕНЕНИЕ
+        val photoUris: List<String>,
+        val initialPage: Int
+    ) : AppDestination
 }

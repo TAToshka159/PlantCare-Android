@@ -76,4 +76,17 @@ interface PlantCareDao {
 
     @Query("DELETE FROM plants WHERE id = :plantId")
     suspend fun deletePlantById(plantId: Long)
+
+    @Query("DELETE FROM photos WHERE id = :photoId")
+    suspend fun deletePhoto(photoId: Long)
+
+    @Query("SELECT * FROM photos WHERE plantId = :plantId ORDER BY date ASC")
+    suspend fun getPhotosByPlant(plantId: Long): List<Photo>
+
+    // PlantCareDao.kt
+    @Query("UPDATE care_events SET datePlanned = :newDate WHERE id = :eventId")
+    suspend fun updateCareEventDate(eventId: Long, newDate: Long)
+
+    @Update
+    suspend fun updateCareEvent(event: CareEvent)
 }

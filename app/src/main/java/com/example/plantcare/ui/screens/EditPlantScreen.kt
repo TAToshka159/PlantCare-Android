@@ -1,19 +1,35 @@
 // EditPlantScreen.kt
 package com.example.plantcare.ui.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
 import com.example.plantcare.PlantCareApplication
 import com.example.plantcare.data.database.entity.CareEvent
+import com.example.plantcare.data.database.entity.Photo
 import com.example.plantcare.data.database.entity.Plant
+import com.example.plantcare.util.FileUtil
 import kotlinx.coroutines.launch
+import java.io.File
 
 @Composable
 fun EditPlantScreen(
@@ -27,14 +43,16 @@ fun EditPlantScreen(
 
     var plant by remember { mutableStateOf<Plant?>(null) }
     var isLoading by remember { mutableStateOf(true) }
+    var photos by remember { mutableStateOf<List<Photo>>(emptyList()) }
 
     LaunchedEffect(plantId) {
         plant = dao.getPlantById(plantId)
+        photos = dao.getPhotosByPlant(plantId)
         isLoading = false
     }
 
     if (isLoading || plant == null) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
         return
@@ -49,12 +67,69 @@ fun EditPlantScreen(
 
     val coroutineScope = rememberCoroutineScope()
 
+    // Launcher для выбора фото из галереи
+    val photoPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            val savedPath = FileUtil.saveImageFromUri(context, it, "plant_${System.currentTimeMillis()}.jpg")
+            if (savedPath != null) {
+                val newPhotoUri = Uri.fromFile(File(savedPath)).toString()
+                coroutineScope.launch {
+                    // Сохраняем новое фото в таблицу photos
+                    val newPhoto = Photo(
+                        id = System.currentTimeMillis(),
+                        plantId = p.id,
+                        photoUri = newPhotoUri,
+                        date = System.currentTimeMillis()
+                    )
+                    dao.insertPhoto(newPhoto)
+                    photos = dao.getPhotosByPlant(p.id)
+
+                    // Обновляем главное фото
+                    val updated = p.copy(photoUri = newPhotoUri)
+                    dao.updatePlant(updated)
+                    plant = updated
+                }
+            }
+        }
+    }
+
+    // Диалог выбора способа смены фото
+    var showPhotoDialog by remember { mutableStateOf(false) }
+
     Column(
         modifier = modifier
             .fillMaxSize()
+            .systemBarsPadding()
             .padding(16.dp)
     ) {
-        Text("Редактировать растение", fontSize = 24.sp, modifier = Modifier.padding(bottom = 24.dp))
+        Text("Редактировать растение", fontSize = 28.sp, fontWeight = FontWeight.Bold,modifier = Modifier.padding(bottom = 24.dp))
+
+        // Превью главного фото с возможностью замены
+        if (!p.photoUri.isNullOrBlank()) {
+            Image(
+                painter = rememberAsyncImagePainter(p.photoUri),
+                contentDescription = "Главное фото",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(150.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .align(Alignment.CenterHorizontally)
+                    .clickable { showPhotoDialog = true }
+                    .padding(bottom = 16.dp)
+            )
+        } else {
+            OutlinedButton(
+                onClick = { showPhotoDialog = true },
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(bottom = 16.dp)
+            ) {
+                Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
+                Text("Добавить фото")
+            }
+        }
 
         OutlinedTextField(
             value = name,
@@ -94,6 +169,7 @@ fun EditPlantScreen(
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
         )
 
+        // Кнопка сохранения
         Button(
             onClick = {
                 if (name.isBlank() || type.isBlank() || room.isBlank()) return@Button
@@ -110,18 +186,16 @@ fun EditPlantScreen(
                 val now = System.currentTimeMillis()
 
                 coroutineScope.launch {
-                    // Обновляем растение
                     dao.updatePlant(updated)
 
-                    // 🔑 ПЕРЕСОЗДАЁМ СОБЫТИЯ УХОДА
+                    // Пересоздаём события ухода
                     dao.deleteCareEventsByPlant(updated.id)
                     dao.insertCareEvent(
                         CareEvent(
                             id = now + 1,
                             plantId = updated.id,
                             type = "watering",
-                            datePlanned = now + updated.wateringInterval * 24L * 60 * 60 * 1000,
-                            dateDone = null
+                            datePlanned = now + updated.wateringInterval * 24L * 60 * 60 * 1000
                         )
                     )
                     dao.insertCareEvent(
@@ -129,19 +203,19 @@ fun EditPlantScreen(
                             id = now + 2,
                             plantId = updated.id,
                             type = "fertilizing",
-                            datePlanned = now + updated.fertilizingInterval * 24L * 60 * 60 * 1000,
-                            dateDone = null
+                            datePlanned = now + updated.fertilizingInterval * 24L * 60 * 60 * 1000
                         )
                     )
 
                     onPlantUpdated()
                 }
             },
-            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+            modifier = Modifier.fillMaxWidth().padding(top = 24.dp)
         ) {
             Text("Сохранить")
         }
 
+        // Кнопка удаления
         Button(
             onClick = {
                 coroutineScope.launch {
@@ -150,9 +224,33 @@ fun EditPlantScreen(
                 }
             },
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
         ) {
             Text("Удалить растение", color = MaterialTheme.colorScheme.onError)
         }
+    }
+
+    // Диалог выбора способа смены фото
+    if (showPhotoDialog) {
+        AlertDialog(
+            onDismissRequest = { showPhotoDialog = false },
+            title = { Text("Сменить фото") },
+            text = { Text("Выберите фото из галереи") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        photoPicker.launch("image/*")
+                        showPhotoDialog = false
+                    }
+                ) {
+                    Text("Выбрать фото")
+                }
+            },
+            dismissButton = {
+                Button(onClick = { showPhotoDialog = false }) {
+                    Text("Отмена")
+                }
+            }
+        )
     }
 }

@@ -1,20 +1,31 @@
 // AddPlantScreen.kt
 package com.example.plantcare.ui.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
 import com.example.plantcare.PlantCareApplication
 import com.example.plantcare.data.getCurrentUserId
 import com.example.plantcare.data.database.entity.CareEvent
 import com.example.plantcare.data.database.entity.Plant
+import com.example.plantcare.util.FileUtil
 import kotlinx.coroutines.launch
+import java.io.File
 
 @Composable
 fun AddPlantScreen(
@@ -30,6 +41,16 @@ fun AddPlantScreen(
     var room by remember { mutableStateOf("") }
     var wateringInterval by remember { mutableStateOf("7") }
     var fertilizingInterval by remember { mutableStateOf("30") }
+    var selectedPhotoUri by remember { mutableStateOf<Uri?>(null) }
+
+    val photoPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            val savedPath = FileUtil.saveImageFromUri(context, it, "plant_${System.currentTimeMillis()}.jpg")
+            selectedPhotoUri = if (savedPath != null) Uri.fromFile(File(savedPath)) else null
+        }
+    }
 
     Column(
         modifier = modifier
@@ -76,6 +97,28 @@ fun AddPlantScreen(
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
         )
 
+        // Кнопка выбора фото
+        OutlinedButton(
+            onClick = { photoPicker.launch("image/*") },
+            modifier = Modifier.padding(top = 16.dp)
+        ) {
+            Text("Выбрать фото растения")
+        }
+
+        // Превью фото
+        if (selectedPhotoUri != null) {
+            Image(
+                painter = rememberAsyncImagePainter(selectedPhotoUri),
+                contentDescription = "Фото растения",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(150.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .padding(top = 8.dp)
+                    .align(Alignment.CenterHorizontally)
+            )
+        }
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -92,6 +135,8 @@ fun AddPlantScreen(
                     val fertilizing = fertilizingInterval.toIntOrNull() ?: 30
                     val now = System.currentTimeMillis()
 
+                    val photoUriString = selectedPhotoUri?.toString()
+
                     coroutineScope.launch {
                         val app = context.applicationContext as PlantCareApplication
                         val dao = app.database.plantCareDao()
@@ -100,7 +145,7 @@ fun AddPlantScreen(
                             userId = userId,
                             name = name.trim(),
                             type = type.trim(),
-                            photoUri = null,
+                            photoUri = photoUriString,
                             room = room.trim(),
                             createdAt = now,
                             wateringInterval = watering,
@@ -108,7 +153,7 @@ fun AddPlantScreen(
                         )
                         val plantId = dao.insertPlant(plant)
 
-                        // 🔑 СОЗДАЁМ СОБЫТИЯ УХОДА
+                        // Создаём события ухода
                         dao.insertCareEvent(
                             CareEvent(
                                 id = now + 1,
