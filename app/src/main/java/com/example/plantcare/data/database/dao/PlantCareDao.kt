@@ -20,7 +20,7 @@ interface PlantCareDao {
     suspend fun insertCareEvent(event: CareEvent)
 
     // Encyclopedia
-    @Query("SELECT * FROM encyclopedia")
+    @Query("SELECT * FROM encyclopedia") // <-- Использует правильное имя таблицы
     suspend fun getAllEncyclopediaEntries(): List<EncyclopediaEntry>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -89,4 +89,8 @@ interface PlantCareDao {
 
     @Update
     suspend fun updateCareEvent(event: CareEvent)
+
+
+    @Query("SELECT * FROM encyclopedia WHERE name = :typeName LIMIT 1") // <-- Правильное имя таблицы
+    suspend fun getEncyclopediaEntryByTypeName(typeName: String): EncyclopediaEntry?
 }

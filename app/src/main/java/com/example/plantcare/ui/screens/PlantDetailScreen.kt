@@ -52,11 +52,21 @@ fun PlantDetailScreen(
     var plant by remember { mutableStateOf<com.example.plantcare.data.database.entity.Plant?>(null) }
     var careEvents by remember { mutableStateOf<List<CareEvent>>(emptyList()) }
     var photos by remember { mutableStateOf<List<Photo>>(emptyList()) }
+    // --- Новое состояние для информации из энциклопедии ---
+    var encyclopediaEntry by remember { mutableStateOf<com.example.plantcare.data.database.entity.EncyclopediaEntry?>(null) }
+    // --- /Новое состояние ---
 
     LaunchedEffect(plantId) {
         plant = dao.getPlantById(plantId)
         careEvents = dao.getUpcomingCareEvents(plantId)
         photos = dao.getPhotosByPlant(plantId)
+
+        // --- Получение информации из энциклопедии ---
+        plant?.type?.let { typeName ->
+            encyclopediaEntry = dao.getEncyclopediaEntryByTypeName(typeName)
+            println("DEBUG: Looking for type: '$typeName', Found EncyclopediaEntry: $encyclopediaEntry") // <-- Отладочная строка
+        }
+        // --- /Получение информации из энциклопедии ---
     }
 
     if (plant == null) {
@@ -118,6 +128,17 @@ fun PlantDetailScreen(
         Text("Состояние: $mood", fontSize = 20.sp, modifier = Modifier.padding(top = 8.dp))
 
         Text("Добавлено: ${formatDate(p.createdAt)}", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+
+        // --- Отображение информации из энциклопедии ---
+        encyclopediaEntry?.let { entry ->
+            Spacer(modifier = Modifier.height(16.dp))
+            Divider(modifier = Modifier.padding(vertical = 8.dp))
+            Text("Информация из энциклопедии:", fontSize = 18.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+
+            Text("Правила ухода: ${entry.careRules}", fontSize = 16.sp, modifier = Modifier.padding(top = 4.dp))
+            Text("Советы по климату: ${entry.climateTips}", fontSize = 16.sp, modifier = Modifier.padding(top = 4.dp))
+        }
+        // --- /Отображение информации из энциклопедии ---
 
         // Фото-история
         Text("Фото-история:", fontSize = 18.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, modifier = Modifier.padding(top = 20.dp))

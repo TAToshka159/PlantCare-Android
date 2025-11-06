@@ -1,18 +1,8 @@
-// EncyclopediaScreen.kt
-package com.example.plantcare.ui.screens
+// PlantLibrary.kt
+package com.example.plantcare.data
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.example.plantcare.data.database.entity.EncyclopediaEntry // Убедитесь, что импорт правильный
+import com.example.plantcare.data.database.entity.EncyclopediaEntry
 
-// Жёстко закодированные данные для энциклопедии
 val encyclopediaEntries = listOf(
     EncyclopediaEntry(1, "Фикус Бенджамина", "Популярное вечнозелёное деревце. Уход: рассеянный свет, умеренный полив, не любит сквозняки. Токсично для животных.", "Регулярный умеренный полив, яркий рассеянный свет", "Тёплое, без сквозняков"),
     EncyclopediaEntry(2, "Сансевиерия (Щучий хвост)", "Неприхотливое растение. Уход: редкий полив, выносит тень и сухой воздух. Токсично для животных.", "Редкий полив, переносит тень", "Тёплое, засухоустойчивое"),
@@ -34,7 +24,7 @@ val encyclopediaEntries = listOf(
     EncyclopediaEntry(18, "Аспарагус (Плакучий)", "Пышное, нежное растение. Уход: рассеянный свет, регулярный полив, опрыскивание. Безопасно.", "Рассеянный свет, регулярный полив, опрыскивание", "Тёплое, умеренная влажность"),
     EncyclopediaEntry(19, "Циперус (Циркус)", "Любит влагу. Уход: частый полив, может расти в воде. Безопасно для животных.", "Частый полив, может расти в воде", "Тёплое, высокая влажность"),
     EncyclopediaEntry(20, "Гибискус (Китайская роза)", "Цветёт крупными яркими цветами. Уход: много света, регулярный полив, зимой — прохладнее. Безопасно.", "Много света, регулярный полив, зимой прохладнее", "Тёплое летом, прохладное зимой"),
-    EncyclopediaEntry(21, "Бегония (корневищная)", "Цветёт долго. Уход: рассеянный свет, умеренный полив, любит влажность. Токсично для животных.", "Рассеянный свет, умеренный полив, высокая влажность", "Тёплое, высокая влажность"),
+    EncyclopediaEntry(21, "Бегония (корневищная)", "Цветёт долго. Уход: рассеянный свет, умеренный полив, любит влажность. Токсично для животных.", "Рассеянный свет, умеренный полив, любит влажность", "Тёплое, высокая влажность"),
     EncyclopediaEntry(22, "Фатсия японская", "Крупнолистное декоративное растение. Уход: полутень, умеренный полив. Безопасно.", "Полутень, умеренный полив", "Тёплое, умеренная влажность"),
     EncyclopediaEntry(23, "Комнатный виноград (Плющ)", "Лиана с красивыми листьями. Уход: тень, умеренный полив. Токсично для животных.", "Тень, умеренный полив", "Тёплое, умеренная влажность"),
     EncyclopediaEntry(24, "Маранта (Красса)", "Растение-мольберт с яркими листьями. Уход: тепло, высокая влажность, регулярный полив. Безопасно.", "Тепло, высокая влажность, регулярный полив", "Тёплое, высокая влажность"),
@@ -45,47 +35,3 @@ val encyclopediaEntries = listOf(
     EncyclopediaEntry(29, "Церопегия (Свеча Святого Винсента)", "Ампельное растение с трубчатыми цветами. Уход: яркий свет, редкий полив. Безопасно.", "Яркий свет, редкий полив", "Тёплое, сухое"),
     EncyclopediaEntry(30, "Медвежье ушко (Плоскостебельный сенполия)", "Пушистые листья, напоминающие ушки. Уход: рассеянный свет, умеренный полив. Безопасно.", "Рассеянный свет, умеренный полив", "Тёплое, умеренная влажность")
 )
-
-@Composable
-fun EncyclopediaScreen(
-    onPlantClick: (EncyclopediaEntry) -> Unit = {} // Добавляем параметр для навигации
-) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2), // 2 колонки
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(encyclopediaEntries) { entry ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f), // Квадратная карточка
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                shape = MaterialTheme.shapes.medium
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(12.dp),
-                    verticalArrangement = Arrangement.SpaceBetween,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text( // Теперь используем material3.Text
-                        text = entry.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
-                    Button(
-                        onClick = { onPlantClick(entry) }, // Вызываем переданную функцию при клике
-                        modifier = Modifier
-                    ) {
-                        Text("Подробнее") // Теперь используем material3.Text
-                    }
-                }
-            }
-        }
-    }
-}

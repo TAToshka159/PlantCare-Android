@@ -15,9 +15,10 @@ class PlantCareApplication : Application() {
         super.onCreate()
         database = AppDatabase.getDatabase(this)
 
-        // Инициализируем админа в фоне
+        // Инициализируем админа и энциклопедию в фоне
         CoroutineScope(Dispatchers.IO).launch {
             DatabaseInitializer.ensureDefaultAdmin(database)
+            DatabaseInitializer.ensureEncyclopediaEntries(database) // <-- Добавляем эту строку
         }
     }
 }

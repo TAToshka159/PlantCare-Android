@@ -8,6 +8,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,6 +30,10 @@ import com.example.plantcare.util.FileUtil
 import kotlinx.coroutines.launch
 import java.io.File
 
+// --- ВАЖНО: Перемещён импорт encyclopediaEntries в начало файла ---
+import com.example.plantcare.ui.screens.encyclopediaEntries
+// --- /ВАЖНО ---
+
 @Composable
 fun AddPlantScreen(
     onPlantAdded: () -> Unit,
@@ -42,6 +49,17 @@ fun AddPlantScreen(
     var wateringInterval by remember { mutableStateOf("7") }
     var fertilizingInterval by remember { mutableStateOf("30") }
     var selectedPhotoUri by remember { mutableStateOf<Uri?>(null) }
+
+    // --- Состояния для кастомного выпадающего списка ---
+    var isDropdownExpanded by remember { mutableStateOf(false) }
+    val allEntryNames = remember { encyclopediaEntries.map { it.name } + listOf("Нет в списке") }
+    val filteredEntries by remember(type) {
+        mutableStateOf(
+            // Всегда фильтруем по введённому тексту, даже если он пустой
+            allEntryNames.filter { it.contains(type, ignoreCase = true) }
+        )
+    }
+    // --- /Состояния ---
 
     val photoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -66,12 +84,70 @@ fun AddPlantScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        OutlinedTextField(
-            value = type,
-            onValueChange = { type = it },
-            label = { Text("Тип (например, Фикус)") },
-            modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
-        )
+        // --- Кастомный выпадающий список ---
+        Box(modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
+            OutlinedTextField(
+                value = type,
+                onValueChange = { value ->
+                    type = value
+                    // Не меняем isDropdownExpanded здесь, только при клике на иконку
+                },
+                label = { Text("Тип (например, Фикус)") },
+                trailingIcon = {
+                    // Иконка стрелки меняется в зависимости от состояния меню
+                    IconButton(
+                        onClick = {
+                            // Переключаем состояние меню при клике на иконку
+                            isDropdownExpanded = !isDropdownExpanded
+                        }
+                    ) {
+                        Icon(
+                            imageVector = if (isDropdownExpanded) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
+                            contentDescription = if (isDropdownExpanded) "Скрыть список" else "Показать список"
+                        )
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // DropdownMenu позиционируется под OutlinedTextField
+            // Отображаем, если isDropdownExpanded = true, независимо от содержимого type
+            if (isDropdownExpanded) {
+                DropdownMenu(
+                    expanded = isDropdownExpanded,
+                    onDismissRequest = { isDropdownExpanded = false }, // Закрытие при клике вне
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .fillMaxWidth() // Просто заполняем ширину под TextField
+                        .padding(horizontal = 8.dp)
+                ) {
+                    // Показываем отфильтрованные элементы
+                    if (filteredEntries.isNotEmpty()) {
+                        filteredEntries.forEach { entryName ->
+                            DropdownMenuItem(
+                                text = { Text(text = entryName) },
+                                onClick = {
+                                    type = if (entryName == "Нет в списке") {
+                                        "" // Очищаем поле, если выбрана опция "Нет в списке"
+                                    } else {
+                                        entryName // Подставляем выбранное имя
+                                    }
+                                    isDropdownExpanded = false // Закрываем меню
+                                },
+                            )
+                        }
+                    } else {
+                        // Если фильтр не дал результатов, показываем "Нет результатов"
+                        DropdownMenuItem(
+                            text = { Text("Нет результатов") },
+                            onClick = { /* Ничего не делаем */ },
+                            enabled = false // Делаем неактивным
+                        )
+                    }
+                }
+            }
+        }
+        // --- /Кастомный выпадающий список ---
 
         OutlinedTextField(
             value = room,
@@ -144,7 +220,7 @@ fun AddPlantScreen(
                             id = now,
                             userId = userId,
                             name = name.trim(),
-                            type = type.trim(),
+                            type = type.trim(), // <-- Теперь будет подставлено из списка или введено вручную
                             photoUri = photoUriString,
                             room = room.trim(),
                             createdAt = now,

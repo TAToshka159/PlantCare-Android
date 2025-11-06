@@ -1,3 +1,4 @@
+// EncyclopediaEntry.kt
 package com.example.plantcare.data.database.entity
 
 import androidx.room.Entity

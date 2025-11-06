@@ -75,7 +75,11 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                         },
                         modifier = modifier
                     )
-                    BottomTab.Encyclopedia -> EncyclopediaScreen()
+                    BottomTab.Encyclopedia -> EncyclopediaScreen(
+                        onPlantClick = { entry ->
+                            currentDestination = AppDestination.EncyclopediaPlantDetail(entry)
+                        }
+                    )
                     BottomTab.More -> MoreScreen()
                 }
             }
@@ -137,6 +141,13 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                     onBack = { currentDestination = AppDestination.PlantDetail(dest.plantId) } // Возврат к деталям растения
                 )
             }
+            is AppDestination.EncyclopediaPlantDetail -> { // <-- НОВАЯ ВЕТКА
+                val entry = (currentDestination as AppDestination.EncyclopediaPlantDetail).entry
+                EncyclopediaPlantDetailScreen(
+                    entry = entry,
+                    onBack = { currentDestination = AppDestination.BottomNavEncyclopedia } // Возврат к вкладке Энциклопедия
+                )
+            }
             // Обработка других возможных состояний, если необходимо
             else -> {
                 // Можно добавить отображение ошибки или заглушку
@@ -161,6 +172,7 @@ private sealed interface AppDestination {
         val photoUris: List<String>,
         val initialPage: Int
     ) : AppDestination
+    data class EncyclopediaPlantDetail(val entry: com.example.plantcare.data.database.entity.EncyclopediaEntry) : AppDestination // <-- Добавлено
 }
 
 // Обновленный enum класс BottomTab с привязкой к AppDestination
