@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun LoginScreen(
     onNavigateToRegister: () -> Unit,
-    onLoginSuccess: () -> Unit,
+    onLoginSuccess: (String, Boolean) -> Unit, // <-- Изменили: логин и isAdmin
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -99,7 +99,7 @@ fun LoginScreen(
                         context.saveCurrentUserId(user.id)
                         context.saveUserName(user.login)
                         context.saveOnboardingCompleted(true)
-                        onLoginSuccess()
+                        onLoginSuccess(user.login, user.role == "admin") // <-- Передаём логин и isAdmin
                     } else {
                         error = "Такой пользователь не существует"
                     }

@@ -1,24 +1,136 @@
+// ui/screens/MoreScreen.kt
 package com.example.plantcare.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 @Composable
-fun MoreScreen() {
-    Box(
+fun MoreScreen(
+    isGuestUser: Boolean = false,
+    isAdminUser: Boolean = false,
+    userName: String = "",
+    onProfileClick: () -> Unit = {},
+    onSettingsClick: () -> Unit = {},
+    onAboutClick: () -> Unit = {},
+    onShowSnackbar: (String) -> Unit = {}
+) {
+    val profileClickAction = if (isGuestUser) {
+        { onShowSnackbar("Зарегистрируйтесь, чтобы получить возможность настройки профиля") }
+    } else {
+        onProfileClick
+    }
+
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
+            .padding(16.dp)
     ) {
+        // Мини-профиль вверху
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 24.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { profileClickAction() }
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Аватар пользователя (заглушка)
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "Аватар пользователя",
+                    modifier = Modifier
+                        .size(64.dp)
+                        .padding(end = 16.dp)
+                )
+
+                // Информация о пользователе
+                Column {
+                    if (isGuestUser) {
+                        Text(
+                            text = "Гость",
+                            style = MaterialTheme.typography.headlineSmall
+                        )
+                        Text(
+                            text = "Гостевой режим",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        Text(
+                            text = userName.ifEmpty { "Пользователь" },
+                            style = MaterialTheme.typography.headlineSmall
+                        )
+                        if (isAdminUser) {
+                            Text(
+                                text = "Администратор",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary // выделяем цветом
+                            )
+                        } else {
+                            Text(
+                                text = "Пользователь",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
         Text(
             text = "Еще",
-            fontSize = 24.sp
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 24.dp)
         )
+
+        // Список опций
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Настройки
+            ListItem(
+                headlineContent = { Text("Настройки") },
+                leadingContent = {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Настройки"
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onSettingsClick() }
+            )
+
+            // О приложении
+            ListItem(
+                headlineContent = { Text("О приложении") },
+                leadingContent = {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = "О приложении"
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onAboutClick() }
+            )
+        }
     }
 }

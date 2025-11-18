@@ -37,7 +37,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun RegisterScreen(
     onNavigateToLogin: () -> Unit,
-    onRegisterSuccess: () -> Unit,
+    onRegisterSuccess: (String, Boolean, Boolean) -> Unit, // <-- Изменили: логин, isGuest, isAdmin
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -113,14 +113,14 @@ fun RegisterScreen(
                         id = 0,
                         login = login.trim(),
                         passwordHash = PasswordUtils.hashPassword(password),
-                        role = "user"
+                        role = "user" // <-- Роль по умолчанию "user"
                     )
 
                     val userId = dao.insertUser(newUser)
                     context.saveCurrentUserId(userId)
                     context.saveUserName(newUser.login)
                     context.saveOnboardingCompleted(true)
-                    onRegisterSuccess()
+                    onRegisterSuccess(newUser.login, false, false) // <-- Не гость, не админ
                 }
             },
             modifier = Modifier
@@ -140,7 +140,7 @@ fun RegisterScreen(
                 context.saveCurrentUserId(-1) // -1 = гость
                 context.saveUserName("Гость")
                 context.saveOnboardingCompleted(true)
-                onRegisterSuccess()
+                onRegisterSuccess("Гость", true, false) // <-- Гость, не админ
             }
         ) {
             Text("Войти как гость", color = MaterialTheme.colorScheme.onSurfaceVariant)

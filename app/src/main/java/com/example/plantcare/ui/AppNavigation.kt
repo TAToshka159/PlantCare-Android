@@ -13,7 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.plantcare.data.isOnboardingCompleted
 import com.example.plantcare.data.saveOnboardingCompleted
 import com.example.plantcare.ui.screens.*
@@ -22,6 +21,11 @@ import com.example.plantcare.ui.screens.*
 fun AppNavigation(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var onboardingCompleted by remember { mutableStateOf(context.isOnboardingCompleted()) }
+
+    // Состояния пользователя
+    var isGuestUser by remember { mutableStateOf(false) } // по умолчанию не гость
+    var isAdminUser by remember { mutableStateOf(false) } // по умолчанию не админ
+    var userName by remember { mutableStateOf("") }       // по умолчанию пустое имя
 
     LaunchedEffect(Unit) {
         onboardingCompleted = context.isOnboardingCompleted()
@@ -34,7 +38,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
     // --- Основной экран с нижней навигацией ---
     if (currentDestination is AppDestination.BottomNavHome ||
         currentDestination is AppDestination.BottomNavEncyclopedia ||
-        currentDestination is AppDestination.BottomNavMore) { // <-- Убрана проверка на Profile
+        currentDestination is AppDestination.BottomNavMore) {
 
         val currentTab = when (currentDestination) {
             is AppDestination.BottomNavHome -> BottomTab.Home
@@ -80,42 +84,56 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                             currentDestination = AppDestination.EncyclopediaPlantDetail(entry)
                         }
                     )
-                    BottomTab.More -> MoreScreen()
+                    BottomTab.More -> MoreScreen(
+                        isGuestUser = isGuestUser,
+                        isAdminUser = isAdminUser,
+                        userName = userName,
+                        onProfileClick = { /* TODO: реализуй переход к профилю или оставь пустым */ },
+                        onSettingsClick = { /* TODO: добавь переход к настройкам */ },
+                        onAboutClick = { /* TODO: добавь переход к "О приложении" */ },
+                        onShowSnackbar = { message -> /* TODO: реализуй отображение сообщения */ }
+                    )
                 }
             }
         }
     }
-    // --- Экраны, не связанные с вкладками (пока оставим как было) ---
+    // --- Экраны, не связанные с вкладками ---
     else {
         when (currentDestination) {
             is AppDestination.OnboardingRegister -> {
                 RegisterScreen(
                     onNavigateToLogin = { currentDestination = AppDestination.OnboardingLogin },
-                    onRegisterSuccess = {
+                    onRegisterSuccess = { login, isGuest, isAdmin ->
                         onboardingCompleted = true
-                        currentDestination = AppDestination.BottomNavHome // Переход к вкладке Home после регистрации
+                        isGuestUser = isGuest          // <-- Обновляем состояние гостя
+                        isAdminUser = isAdmin          // <-- Обновляем состояние админа
+                        userName = if (isGuest) "Гость" else login // <-- Обновляем имя
+                        currentDestination = AppDestination.BottomNavHome
                     }
                 )
             }
             is AppDestination.OnboardingLogin -> {
                 LoginScreen(
                     onNavigateToRegister = { currentDestination = AppDestination.OnboardingRegister },
-                    onLoginSuccess = {
+                    onLoginSuccess = { login, isAdmin ->
                         onboardingCompleted = true
-                        currentDestination = AppDestination.BottomNavHome // Переход к вкладке Home после входа
+                        isGuestUser = false          // <-- Обновляем состояние (не гость)
+                        isAdminUser = isAdmin        // <-- Обновляем состояние админа
+                        userName = login             // <-- Обновляем имя
+                        currentDestination = AppDestination.BottomNavHome
                     }
                 )
             }
             is AppDestination.AddPlant -> {
                 AddPlantScreen(
-                    onPlantAdded = { currentDestination = AppDestination.BottomNavHome } // Возврат к вкладке Home
+                    onPlantAdded = { currentDestination = AppDestination.BottomNavHome }
                 )
             }
             is AppDestination.PlantDetail -> {
                 val plantId = (currentDestination as AppDestination.PlantDetail).plantId
                 PlantDetailScreen(
                     plantId = plantId,
-                    onBack = { currentDestination = AppDestination.BottomNavHome }, // Возврат к вкладке Home
+                    onBack = { currentDestination = AppDestination.BottomNavHome },
                     onEdit = { currentDestination = AppDestination.EditPlant(plantId) },
                     onPhotoClick = { photoUris, index ->
                         currentDestination = AppDestination.FullScreenPhoto(
@@ -130,7 +148,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                 val plantId = (currentDestination as AppDestination.EditPlant).plantId
                 EditPlantScreen(
                     plantId = plantId,
-                    onPlantUpdated = { currentDestination = AppDestination.BottomNavHome } // Возврат к вкладке Home
+                    onPlantUpdated = { currentDestination = AppDestination.BottomNavHome }
                 )
             }
             is AppDestination.FullScreenPhoto -> {
@@ -138,17 +156,16 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                 FullScreenPhotoScreen(
                     photoUris = dest.photoUris,
                     initialPage = dest.initialPage,
-                    onBack = { currentDestination = AppDestination.PlantDetail(dest.plantId) } // Возврат к деталям растения
+                    onBack = { currentDestination = AppDestination.PlantDetail(dest.plantId) }
                 )
             }
-            is AppDestination.EncyclopediaPlantDetail -> { // <-- НОВАЯ ВЕТКА
+            is AppDestination.EncyclopediaPlantDetail -> {
                 val entry = (currentDestination as AppDestination.EncyclopediaPlantDetail).entry
                 EncyclopediaPlantDetailScreen(
                     entry = entry,
-                    onBack = { currentDestination = AppDestination.BottomNavEncyclopedia } // Возврат к вкладке Энциклопедия
+                    onBack = { currentDestination = AppDestination.BottomNavEncyclopedia }
                 )
             }
-            // Обработка других возможных состояний, если необходимо
             else -> {
                 // Можно добавить отображение ошибки или заглушку
             }
@@ -163,8 +180,8 @@ private sealed interface AppDestination {
     object BottomNavHome : AppDestination
     object BottomNavEncyclopedia : AppDestination
     object BottomNavMore : AppDestination
-    // object BottomNavProfile : AppDestination // <-- Удалено
     object AddPlant : AppDestination
+    object Profile : AppDestination
     data class PlantDetail(val plantId: Long) : AppDestination
     data class EditPlant(val plantId: Long) : AppDestination
     data class FullScreenPhoto(
@@ -172,7 +189,7 @@ private sealed interface AppDestination {
         val photoUris: List<String>,
         val initialPage: Int
     ) : AppDestination
-    data class EncyclopediaPlantDetail(val entry: com.example.plantcare.data.database.entity.EncyclopediaEntry) : AppDestination // <-- Добавлено
+    data class EncyclopediaPlantDetail(val entry: com.example.plantcare.data.database.entity.EncyclopediaEntry) : AppDestination
 }
 
 // Обновленный enum класс BottomTab с привязкой к AppDestination
@@ -184,5 +201,4 @@ private enum class BottomTab(
     Home(Icons.Default.Home, "Растения", AppDestination.BottomNavHome),
     Encyclopedia(Icons.Default.Book, "Энциклопедия", AppDestination.BottomNavEncyclopedia),
     More(Icons.Default.MoreVert, "Еще", AppDestination.BottomNavMore)
-    // Profile(Icons.Default.AccountCircle, "Профиль", AppDestination.BottomNavProfile) // <-- Удалено
 }
