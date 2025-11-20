@@ -51,7 +51,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         darkTheme = isDarkTheme,
         colorThemeName = colorThemeName,
         fontSizeMultiplier = fontSizeMultiplier,
-        selectedFontFamilyName = selectedFontFamilyName // <-- Исправлено: добавлен параметр
+        selectedFontFamilyName = selectedFontFamilyName
     ) {
         Surface(
             modifier = Modifier.fillMaxSize(),
@@ -71,13 +71,17 @@ fun AppNavigation(modifier: Modifier = Modifier) {
 
                 Scaffold(
                     bottomBar = {
-                        NavigationBar {
+                        NavigationBar(
+                            containerColor = MaterialTheme.colorScheme.surface, // <-- Важно!
+                            contentColor = MaterialTheme.colorScheme.onSurface // <-- Важно!
+                        ) {
                             BottomTab.entries.forEach { tab ->
                                 NavigationBarItem(
                                     icon = { Icon(tab.icon, contentDescription = tab.label) },
                                     label = { Text(tab.label) },
                                     selected = currentTab == tab,
-                                    onClick = { currentDestination = tab.destination }
+                                    onClick = { currentDestination = tab.destination },
+                                    // Цвет текста и иконки автоматически подхватывается из contentColor
                                 )
                             }
                         }
@@ -93,13 +97,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                                 onAddPlantClick = { currentDestination = AppDestination.AddPlant },
                                 onPlantClick = { plantId ->
                                     currentDestination = AppDestination.PlantDetail(plantId)
-                                },
-                                onReturnToOnboarding = {
-                                    context.saveOnboardingCompleted(false)
-                                    onboardingCompleted = false
-                                    currentDestination = AppDestination.OnboardingRegister
-                                },
-                                modifier = modifier
+                                }
                             )
                             BottomTab.Encyclopedia -> EncyclopediaScreen(
                                 onPlantClick = { entry ->
@@ -114,6 +112,11 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                                 onSettingsClick = { /* TODO: добавь переход к настройкам */ },
                                 onAboutClick = { /* TODO: добавь переход к "О приложении" */ },
                                 onThemeSettingsClick = { currentDestination = AppDestination.ThemeSettings },
+                                onLogoutClick = {
+                                    context.saveOnboardingCompleted(false)
+                                    onboardingCompleted = false
+                                    currentDestination = AppDestination.OnboardingRegister
+                                },
                                 onShowSnackbar = { message -> /* TODO: реализуй отображение сообщения */ }
                             )
                         }
@@ -171,7 +174,8 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                         val plantId = (currentDestination as AppDestination.EditPlant).plantId
                         EditPlantScreen(
                             plantId = plantId,
-                            onPlantUpdated = { currentDestination = AppDestination.BottomNavHome }
+                            onPlantUpdated = { currentDestination = AppDestination.PlantDetail(plantId) },
+                            onBack = { currentDestination = AppDestination.PlantDetail(plantId) }
                         )
                     }
                     is AppDestination.FullScreenPhoto -> {
@@ -233,7 +237,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
 }
 
 // Обновленный sealed interface AppDestination
-private sealed interface AppDestination {
+sealed interface AppDestination {
     object OnboardingRegister : AppDestination
     object OnboardingLogin : AppDestination
     object BottomNavHome : AppDestination
@@ -253,7 +257,7 @@ private sealed interface AppDestination {
 }
 
 // Обновленный enum класс BottomTab с привязкой к AppDestination
-private enum class BottomTab(
+enum class BottomTab(
     val icon: androidx.compose.ui.graphics.vector.ImageVector,
     val label: String,
     val destination: AppDestination

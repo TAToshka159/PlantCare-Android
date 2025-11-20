@@ -21,6 +21,7 @@ fun MoreScreen(
     onSettingsClick: () -> Unit = {}, // Оставлен для совместимости, но не используется
     onAboutClick: () -> Unit = {},
     onThemeSettingsClick: () -> Unit = {}, // <-- Новый параметр
+    onLogoutClick: () -> Unit = {}, // <-- Новый параметр для выхода
     onShowSnackbar: (String) -> Unit = {}
 ) {
     val profileClickAction = if (isGuestUser) {
@@ -132,5 +133,22 @@ fun MoreScreen(
                     .clickable { onAboutClick() }
             )
         }
+
+        // --- Кнопка "Выход" внизу ---
+        Spacer(modifier = Modifier.weight(1f))
+
+        Button(
+            onClick = onLogoutClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.error,
+                contentColor = MaterialTheme.colorScheme.onError
+            )
+        ) {
+            Text("Выход")
+        }
+        // --- /Кнопка "Выход" ---
     }
 }

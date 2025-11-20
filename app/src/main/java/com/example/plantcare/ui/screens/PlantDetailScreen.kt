@@ -13,8 +13,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,6 +37,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlantDetailScreen(
     plantId: Long,
@@ -68,16 +71,32 @@ fun PlantDetailScreen(
     }
 
     if (plant == null) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .systemBarsPadding()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("Растение не найдено", style = MaterialTheme.typography.headlineMedium)
-            Button(onClick = onBack) { Text("Назад") }
+        // --- Оборачиваем в Scaffold с TopAppBar ---
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Детали растения") },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Назад"
+                            )
+                        }
+                    }
+                )
+            }
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Растение не найдено", style = MaterialTheme.typography.headlineMedium)
+            }
         }
         return
     }
@@ -109,197 +128,207 @@ fun PlantDetailScreen(
         }
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .systemBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
-    ) {
-        Text("Детали растения", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.padding(bottom = 16.dp))
-        Text("Название: ${p.name}", style = MaterialTheme.typography.titleLarge)
-        Text("Тип: ${p.type}", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 4.dp))
-        Text("Комната: ${p.room}", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 4.dp))
-
-        // Смайлик настроения
-        val mood = PlantMood.getMood(careEvents)
-        Text("Состояние: $mood", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 8.dp))
-
-        Text("Добавлено: ${formatDate(p.createdAt)}", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
-
-        // --- Отображение информации из энциклопедии ---
-        encyclopediaEntry?.let { entry ->
-            Spacer(modifier = Modifier.height(16.dp))
-            Divider(modifier = Modifier.padding(vertical = 8.dp))
-            Text("Информация из энциклопедии:", style = MaterialTheme.typography.titleMedium)
-
-            Text("Правила ухода: ${entry.careRules}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
-            Text("Советы по климату: ${entry.climateTips}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
-        }
-        // --- /Отображение информации из энциклопедии ---
-
-        // Фото-история
-        Text("Фото-история:", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 20.dp))
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            if (!p.photoUri.isNullOrBlank()) {
-                item {
-                    val allUris = listOf(p.photoUri) + photos.map { it.photoUri }
-                    Image(
-                        painter = rememberAsyncImagePainter(p.photoUri),
-                        contentDescription = "Главное фото",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(100.dp)
-                            .clip(CircleShape)
-                            .clickable { onPhotoClick(allUris, 0) }
-                    )
+    // --- Оборачиваем в Scaffold с TopAppBar ---
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Детали растения") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Назад"
+                        )
+                    }
+                },
+                actions = { // <-- Добавляем иконку карандаша справа
+                    IconButton(onClick = onEdit) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Изменить"
+                        )
+                    }
                 }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
+        ) {
+            Text("Название: ${p.name}", style = MaterialTheme.typography.titleLarge)
+            Text("Тип: ${p.type}", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 4.dp))
+            Text("Комната: ${p.room}", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 4.dp))
+
+            // Смайлик настроения
+            val mood = PlantMood.getMood(careEvents)
+            Text("Состояние: $mood", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 8.dp))
+
+            Text("Добавлено: ${formatDate(p.createdAt)}", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
+
+            // --- Отображение информации из энциклопедии ---
+            encyclopediaEntry?.let { entry ->
+                Spacer(modifier = Modifier.height(16.dp))
+                Divider(modifier = Modifier.padding(vertical = 8.dp))
+                Text("Информация из энциклопедии:", style = MaterialTheme.typography.titleMedium)
+
+                Text("Правила ухода: ${entry.careRules}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
+                Text("Советы по климату: ${entry.climateTips}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
             }
+            // --- /Отображение информации из энциклопедии ---
 
-            items(photos.size) { index ->
-                val photo = photos[index]
-                val allUris = listOfNotNull(p.photoUri) + photos.map { it.photoUri }
-                val clickIndex = if (p.photoUri != null) index + 1 else index
+            // Фото-история
+            Text("Фото-история:", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 20.dp))
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (!p.photoUri.isNullOrBlank()) {
+                    item {
+                        val allUris = listOf(p.photoUri) + photos.map { it.photoUri }
+                        Image(
+                            painter = rememberAsyncImagePainter(p.photoUri),
+                            contentDescription = "Главное фото",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(100.dp)
+                                .clip(CircleShape)
+                                .clickable { onPhotoClick(allUris, 0) }
+                        )
+                    }
+                }
 
-                Box {
-                    Image(
-                        painter = rememberAsyncImagePainter(photo.photoUri),
-                        contentDescription = "Фото",
-                        contentScale = ContentScale.Crop,
+                items(photos.size) { index ->
+                    val photo = photos[index]
+                    val allUris = listOfNotNull(p.photoUri) + photos.map { it.photoUri }
+                    val clickIndex = if (p.photoUri != null) index + 1 else index
+
+                    Box {
+                        Image(
+                            painter = rememberAsyncImagePainter(photo.photoUri),
+                            contentDescription = "Фото",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(100.dp)
+                                .clip(CircleShape)
+                                .clickable { onPhotoClick(allUris, clickIndex) }
+                        )
+                        IconButton(
+                            onClick = {
+                                coroutineScope.launch {
+                                    dao.deletePhoto(photo.id)
+                                    photos = dao.getPhotosByPlant(p.id)
+                                }
+                            },
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .size(24.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.error.copy(alpha = 0.8f))
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Удалить",
+                                tint = MaterialTheme.colorScheme.onError
+                            )
+                        }
+                    }
+                }
+
+                item {
+                    IconButton(
+                        onClick = { photoPicker.launch("image/*") },
                         modifier = Modifier
                             .size(100.dp)
                             .clip(CircleShape)
-                            .clickable { onPhotoClick(allUris, clickIndex) }
-                    )
-                    IconButton(
-                        onClick = {
-                            coroutineScope.launch {
-                                dao.deletePhoto(photo.id)
-                                photos = dao.getPhotosByPlant(p.id)
-                            }
-                        },
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .size(24.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.error.copy(alpha = 0.8f))
+                            .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Удалить",
-                            tint = MaterialTheme.colorScheme.onError
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Добавить фото",
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
             }
 
-            item {
-                IconButton(
-                    onClick = { photoPicker.launch("image/*") },
+            // Ближайший уход
+            Text("Ближайший уход:", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 20.dp))
+
+            // Полив
+            if (wateringEvent != null) {
+                val days = daysUntil(wateringEvent.datePlanned)
+                val dateStr = formatDate(wateringEvent.datePlanned)
+                val daysWord = PluralUtil.daysUntil(days)
+                val wateringText = when {
+                    days > 0 -> "Полив через $days $daysWord ($dateStr)"
+                    days == 0 -> "Полив сегодня! ($dateStr)"
+                    else -> {
+                        val overdueDays = -days
+                        val overdueWord = PluralUtil.daysUntil(overdueDays)
+                        "Полив просрочен на $overdueDays $overdueWord ($dateStr)"
+                    }
+                }
+                // --- Используем только primary цвет для текста ---
+                Text(wateringText, color = MaterialTheme.colorScheme.onSurface)
+
+                // Кнопка "Полито"
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            val newDate = System.currentTimeMillis() + (p.wateringInterval * 24L * 60 * 60 * 1000)
+                            val updatedEvent = wateringEvent.copy(datePlanned = newDate)
+                            dao.updateCareEvent(updatedEvent)
+                            // Обновим список событий
+                            careEvents = dao.getUpcomingCareEvents(plantId)
+                        }
+                    },
                     modifier = Modifier
-                        .size(100.dp)
-                        .clip(CircleShape)
-                        .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Добавить фото",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                    Text("Полито")
                 }
             }
-        }
 
-        // Ближайший уход
-        Text("Ближайший уход:", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 20.dp))
-
-        // Полив
-        if (wateringEvent != null) {
-            val days = daysUntil(wateringEvent.datePlanned)
-            val dateStr = formatDate(wateringEvent.datePlanned)
-            val daysWord = PluralUtil.daysUntil(days)
-            val wateringText = when {
-                days > 0 -> "Полив через $days $daysWord ($dateStr)"
-                days == 0 -> "Полив сегодня! ($dateStr)"
-                else -> {
-                    val overdueDays = -days
-                    val overdueWord = PluralUtil.daysUntil(overdueDays)
-                    "Полив просрочен на $overdueDays $overdueWord ($dateStr)"
-                }
-            }
-            // --- Используем только primary цвет для текста ---
-            Text(wateringText, color = MaterialTheme.colorScheme.onSurface)
-
-            // Кнопка "Полито"
-            Button(
-                onClick = {
-                    coroutineScope.launch {
-                        val newDate = System.currentTimeMillis() + (p.wateringInterval * 24L * 60 * 60 * 1000)
-                        val updatedEvent = wateringEvent.copy(datePlanned = newDate)
-                        dao.updateCareEvent(updatedEvent)
-                        // Обновим список событий
-                        careEvents = dao.getUpcomingCareEvents(plantId)
+            // Удобрение
+            if (fertilizingEvent != null) {
+                val days = daysUntil(fertilizingEvent.datePlanned)
+                val dateStr = formatDate(fertilizingEvent.datePlanned)
+                val daysWord = PluralUtil.daysUntil(days)
+                val fertilizingText = when {
+                    days > 0 -> "Удобрение через $days $daysWord ($dateStr)"
+                    days == 0 -> "Удобрение сегодня! ($dateStr)"
+                    else -> {
+                        val overdueDays = -days
+                        val overdueWord = PluralUtil.daysUntil(overdueDays)
+                        "Удобрение просрочено на $overdueDays $overdueWord ($dateStr)"
                     }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-            ) {
-                Text("Полито")
-            }
-        }
+                }
+                // --- Используем только primary цвет для текста ---
+                Text(fertilizingText, color = MaterialTheme.colorScheme.onSurface)
 
-        // Удобрение
-        if (fertilizingEvent != null) {
-            val days = daysUntil(fertilizingEvent.datePlanned)
-            val dateStr = formatDate(fertilizingEvent.datePlanned)
-            val daysWord = PluralUtil.daysUntil(days)
-            val fertilizingText = when {
-                days > 0 -> "Удобрение через $days $daysWord ($dateStr)"
-                days == 0 -> "Удобрение сегодня! ($dateStr)"
-                else -> {
-                    val overdueDays = -days
-                    val overdueWord = PluralUtil.daysUntil(overdueDays)
-                    "Удобрение просрочено на $overdueDays $overdueWord ($dateStr)"
+                // Кнопка "Удобрено"
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            val newDate = System.currentTimeMillis() + (p.fertilizingInterval * 24L * 60 * 60 * 1000)
+                            val updatedEvent = fertilizingEvent.copy(datePlanned = newDate)
+                            dao.updateCareEvent(updatedEvent)
+                            // Обновим список событий
+                            careEvents = dao.getUpcomingCareEvents(plantId)
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                ) {
+                    Text("Удобрено")
                 }
             }
-            // --- Используем только primary цвет для текста ---
-            Text(fertilizingText, color = MaterialTheme.colorScheme.onSurface)
-
-            // Кнопка "Удобрено"
-            Button(
-                onClick = {
-                    coroutineScope.launch {
-                        val newDate = System.currentTimeMillis() + (p.fertilizingInterval * 24L * 60 * 60 * 1000)
-                        val updatedEvent = fertilizingEvent.copy(datePlanned = newDate)
-                        dao.updateCareEvent(updatedEvent)
-                        // Обновим список событий
-                        careEvents = dao.getUpcomingCareEvents(plantId)
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-            ) {
-                Text("Удобрено")
-            }
-        }
-
-        // Кнопки "Назад" и "Изменить"
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 24.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Button(onClick = onBack) {
-                Text("Назад")
-            }
-            OutlinedButton(onClick = onEdit) {
-                Text("Изменить")
-            }
+            // --- УБРАЛИ КНОПКУ "ИЗМЕНИТЬ" ---
         }
     }
 }

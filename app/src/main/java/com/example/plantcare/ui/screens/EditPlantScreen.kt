@@ -1,4 +1,3 @@
-// EditPlantScreen.kt
 package com.example.plantcare.ui.screens
 
 import android.net.Uri
@@ -10,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,10 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.example.plantcare.PlantCareApplication
 import com.example.plantcare.data.database.entity.CareEvent
@@ -31,10 +29,12 @@ import com.example.plantcare.util.FileUtil
 import kotlinx.coroutines.launch
 import java.io.File
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditPlantScreen(
     plantId: Long,
     onPlantUpdated: () -> Unit,
+    onBack: () -> Unit, // <-- Новый параметр
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -52,8 +52,30 @@ fun EditPlantScreen(
     }
 
     if (isLoading || plant == null) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
+        // --- Оборачиваем в Scaffold с TopAppBar ---
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Редактировать растение") },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) { // <-- Используем onBack
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Назад"
+                            )
+                        }
+                    }
+                )
+            }
+        ) { padding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
         }
         return
     }
@@ -98,135 +120,150 @@ fun EditPlantScreen(
     // Диалог выбора способа смены фото
     var showPhotoDialog by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .systemBarsPadding()
-            .padding(16.dp)
-    ) {
-        Text("Редактировать растение", fontSize = 28.sp, fontWeight = FontWeight.Bold,modifier = Modifier.padding(bottom = 24.dp))
-
-        // Превью главного фото с возможностью замены
-        if (!p.photoUri.isNullOrBlank()) {
-            Image(
-                painter = rememberAsyncImagePainter(p.photoUri),
-                contentDescription = "Главное фото",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(150.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .align(Alignment.CenterHorizontally)
-                    .clickable { showPhotoDialog = true }
-                    .padding(bottom = 16.dp)
+    // --- Оборачиваем в Scaffold с TopAppBar ---
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Редактировать растение") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) { // <-- Используем onBack
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Назад"
+                        )
+                    }
+                }
             )
-        } else {
-            OutlinedButton(
-                onClick = { showPhotoDialog = true },
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(bottom = 16.dp)
-            ) {
-                Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
-                Text("Добавить фото")
-            }
         }
-
-        OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
-            label = { Text("Название") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = type,
-            onValueChange = { type = it },
-            label = { Text("Тип") },
-            modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
-        )
-
-        OutlinedTextField(
-            value = room,
-            onValueChange = { room = it },
-            label = { Text("Комната") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-            modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
-        )
-
-        OutlinedTextField(
-            value = wateringInterval,
-            onValueChange = { wateringInterval = it },
-            label = { Text("Полив каждые N дней") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
-        )
-
-        OutlinedTextField(
-            value = fertilizingInterval,
-            onValueChange = { fertilizingInterval = it },
-            label = { Text("Удобрение каждые N дней") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
-        )
-
-        // Кнопка сохранения
-        Button(
-            onClick = {
-                if (name.isBlank() || type.isBlank() || room.isBlank()) return@Button
-
-                val watering = wateringInterval.toIntOrNull() ?: p.wateringInterval
-                val fertilizing = fertilizingInterval.toIntOrNull() ?: p.fertilizingInterval
-                val updated = p.copy(
-                    name = name.trim(),
-                    type = type.trim(),
-                    room = room.trim(),
-                    wateringInterval = watering,
-                    fertilizingInterval = fertilizing
+    ) { padding ->
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp)
+        ) {
+            // Превью главного фото с возможностью замены
+            if (!p.photoUri.isNullOrBlank()) {
+                Image(
+                    painter = rememberAsyncImagePainter(p.photoUri),
+                    contentDescription = "Главное фото",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(150.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .align(Alignment.CenterHorizontally)
+                        .clickable { showPhotoDialog = true }
+                        .padding(bottom = 16.dp)
                 )
-                val now = System.currentTimeMillis()
-
-                coroutineScope.launch {
-                    dao.updatePlant(updated)
-
-                    // Пересоздаём события ухода
-                    dao.deleteCareEventsByPlant(updated.id)
-                    dao.insertCareEvent(
-                        CareEvent(
-                            id = now + 1,
-                            plantId = updated.id,
-                            type = "watering",
-                            datePlanned = now + updated.wateringInterval * 24L * 60 * 60 * 1000
-                        )
-                    )
-                    dao.insertCareEvent(
-                        CareEvent(
-                            id = now + 2,
-                            plantId = updated.id,
-                            type = "fertilizing",
-                            datePlanned = now + updated.fertilizingInterval * 24L * 60 * 60 * 1000
-                        )
-                    )
-
-                    onPlantUpdated()
+            } else {
+                OutlinedButton(
+                    onClick = { showPhotoDialog = true },
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(bottom = 16.dp)
+                ) {
+                    Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
+                    Text("Добавить фото")
                 }
-            },
-            modifier = Modifier.fillMaxWidth().padding(top = 24.dp)
-        ) {
-            Text("Сохранить")
-        }
+            }
 
-        // Кнопка удаления
-        Button(
-            onClick = {
-                coroutineScope.launch {
-                    dao.deletePlantAndRelatedData(p.id)
-                    onPlantUpdated()
-                }
-            },
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-        ) {
-            Text("Удалить растение", color = MaterialTheme.colorScheme.onError)
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Название") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = type,
+                onValueChange = { type = it },
+                label = { Text("Тип") },
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+            )
+
+            OutlinedTextField(
+                value = room,
+                onValueChange = { room = it },
+                label = { Text("Комната") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+            )
+
+            OutlinedTextField(
+                value = wateringInterval,
+                onValueChange = { wateringInterval = it },
+                label = { Text("Полив каждые N дней") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+            )
+
+            OutlinedTextField(
+                value = fertilizingInterval,
+                onValueChange = { fertilizingInterval = it },
+                label = { Text("Удобрение каждые N дней") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+            )
+
+            // Кнопка сохранения
+            Button(
+                onClick = {
+                    if (name.isBlank() || type.isBlank() || room.isBlank()) return@Button
+
+                    val watering = wateringInterval.toIntOrNull() ?: p.wateringInterval
+                    val fertilizing = fertilizingInterval.toIntOrNull() ?: p.fertilizingInterval
+                    val updated = p.copy(
+                        name = name.trim(),
+                        type = type.trim(),
+                        room = room.trim(),
+                        wateringInterval = watering,
+                        fertilizingInterval = fertilizing
+                    )
+                    val now = System.currentTimeMillis()
+
+                    coroutineScope.launch {
+                        dao.updatePlant(updated)
+
+                        // Пересоздаём события ухода
+                        dao.deleteCareEventsByPlant(updated.id)
+                        dao.insertCareEvent(
+                            CareEvent(
+                                id = now + 1,
+                                plantId = updated.id,
+                                type = "watering",
+                                datePlanned = now + updated.wateringInterval * 24L * 60 * 60 * 1000
+                            )
+                        )
+                        dao.insertCareEvent(
+                            CareEvent(
+                                id = now + 2,
+                                plantId = updated.id,
+                                type = "fertilizing",
+                                datePlanned = now + updated.fertilizingInterval * 24L * 60 * 60 * 1000
+                            )
+                        )
+
+                        onPlantUpdated() // <-- Возврат с сохранением
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().padding(top = 24.dp)
+            ) {
+                Text("Сохранить")
+            }
+
+            // Кнопка удаления
+            Button(
+                onClick = {
+                    coroutineScope.launch {
+                        dao.deletePlantAndRelatedData(p.id)
+                        onPlantUpdated() // <-- Возврат после удаления
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+            ) {
+                Text("Удалить растение", color = MaterialTheme.colorScheme.onError)
+            }
         }
     }
 

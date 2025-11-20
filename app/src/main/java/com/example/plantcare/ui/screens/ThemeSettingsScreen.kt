@@ -135,7 +135,7 @@ fun ThemeSettingsScreen(
 
             // Пример текста с текущим шрифтом
             Text(
-                text = "Пример текста с выбранным шрифтом\nНе забывайте поливать цветы",
+                text = "Пример текста с выбранным шрифтом:\n'Не забывайте поливать цветы'",
                 style = MaterialTheme.typography.bodyLarge.copy(
                     fontWeight = FontWeight.Normal,
                     fontSize = MaterialTheme.typography.bodyLarge.fontSize * currentFontSize // <-- Исправлено
