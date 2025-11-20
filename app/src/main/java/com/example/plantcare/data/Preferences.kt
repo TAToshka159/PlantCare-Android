@@ -1,3 +1,4 @@
+// data/Preferences.kt
 package com.example.plantcare.data
 
 import android.content.Context
@@ -10,8 +11,12 @@ private const val KEY_USER_PASSWORD = "user_password"
 private const val KEY_CURRENT_USER_ID = "current_user_id"
 private const val KEY_DARK_THEME = "dark_theme_enabled"
 private const val KEY_SELECTED_FONT_FAMILY = "selected_font_family"
-private const val KEY_FONT_SIZE = "font_size" // <-- Новый ключ
-private const val KEY_COLOR_THEME = "color_theme" // <-- Новый ключ
+private const val KEY_FONT_SIZE = "font_size"
+private const val KEY_COLOR_THEME = "color_theme"
+// --- Новые ключи ---
+private const val KEY_USER_ROLE = "user_role" // "admin" или "user"
+private const val KEY_IS_GUEST = "is_guest_user"
+// ---
 
 /**
  * Проверяет, прошёл ли пользователь онбординг
@@ -145,3 +150,41 @@ fun Context.getColorTheme(): String {
     return getSharedPreferences(PREF_NAME, MODE_PRIVATE)
         .getString(KEY_COLOR_THEME, "Forest") ?: "Forest"
 }
+
+// --- НОВЫЕ функции для сохранения роли и статуса ---
+/**
+ * Сохраняет, является ли пользователь администратором
+ */
+fun Context.saveUserRole(isAdmin: Boolean) {
+    getSharedPreferences(PREF_NAME, MODE_PRIVATE)
+        .edit()
+        .putBoolean(KEY_USER_ROLE, isAdmin)
+        .apply()
+}
+
+/**
+ * Возвращает, является ли пользователь администратором. По умолчанию — false
+ */
+fun Context.getUserRole(): Boolean {
+    return getSharedPreferences(PREF_NAME, MODE_PRIVATE)
+        .getBoolean(KEY_USER_ROLE, false)
+}
+
+/**
+ * Сохраняет, является ли пользователь гостем
+ */
+fun Context.saveIsGuest(isGuest: Boolean) {
+    getSharedPreferences(PREF_NAME, MODE_PRIVATE)
+        .edit()
+        .putBoolean(KEY_IS_GUEST, isGuest)
+        .apply()
+}
+
+/**
+ * Возвращает, является ли пользователь гостем. По умолчанию — true
+ */
+fun Context.getIsGuest(): Boolean {
+    return getSharedPreferences(PREF_NAME, MODE_PRIVATE)
+        .getBoolean(KEY_IS_GUEST, true)
+}
+// --- /НОВЫЕ функции ---

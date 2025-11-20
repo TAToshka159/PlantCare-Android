@@ -1,4 +1,4 @@
-// ui/screens/LoginScreen.kt
+// LoginScreen.kt
 package com.example.plantcare.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
@@ -28,8 +28,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.plantcare.PlantCareApplication
 import com.example.plantcare.data.PasswordUtils
+import com.example.plantcare.data.database.entity.User
 import com.example.plantcare.data.saveCurrentUserId
+import com.example.plantcare.data.saveIsGuest
 import com.example.plantcare.data.saveOnboardingCompleted
+import com.example.plantcare.data.saveUserRole
 import com.example.plantcare.data.saveUserName
 import kotlinx.coroutines.launch
 
@@ -96,10 +99,13 @@ fun LoginScreen(
                     val enteredHash = PasswordUtils.hashPassword(password)
 
                     if (user != null && user.passwordHash == enteredHash) {
+                        val isAdmin = user.role == "admin"
                         context.saveCurrentUserId(user.id)
                         context.saveUserName(user.login)
                         context.saveOnboardingCompleted(true)
-                        onLoginSuccess(user.login, user.role == "admin") // <-- Передаём логин и isAdmin
+                        context.saveIsGuest(false) // <-- Не гость
+                        context.saveUserRole(isAdmin) // <-- Сохраняем роль
+                        onLoginSuccess(user.login, isAdmin) // <-- Передаём логин и isAdmin
                     } else {
                         error = "Такой пользователь не существует"
                     }

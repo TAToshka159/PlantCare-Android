@@ -31,7 +31,7 @@ import com.example.plantcare.PlantCareApplication
 import com.example.plantcare.data.database.entity.CareEvent
 import com.example.plantcare.data.database.entity.Photo
 import com.example.plantcare.util.FileUtil
-import com.example.plantcare.util.PlantMood
+import com.example.plantcare.util.PlantMoodUtil
 import com.example.plantcare.util.PluralUtil
 import kotlinx.coroutines.launch
 import java.io.File
@@ -165,7 +165,7 @@ fun PlantDetailScreen(
             Text("Комната: ${p.room}", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 4.dp))
 
             // Смайлик настроения
-            val mood = PlantMood.getMood(careEvents)
+            val mood = PlantMoodUtil.getMood(careEvents)
             Text("Состояние: $mood", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 8.dp))
 
             Text("Добавлено: ${formatDate(p.createdAt)}", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))

@@ -79,4 +79,6 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("androidx.compose.material:material-icons-extended:1.6.8")
     implementation(platform(libs.androidx.compose.bom))
+
+    implementation("androidx.work:work-runtime-ktx:2.8.1")
 }

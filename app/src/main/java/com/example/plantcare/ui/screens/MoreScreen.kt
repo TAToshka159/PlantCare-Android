@@ -1,3 +1,4 @@
+// MoreScreen.kt
 package com.example.plantcare.ui.screens
 
 import androidx.compose.foundation.clickable
@@ -22,10 +23,11 @@ fun MoreScreen(
     onAboutClick: () -> Unit = {},
     onThemeSettingsClick: () -> Unit = {}, // <-- Новый параметр
     onSupportClick: () -> Unit = {}, // <-- Новый параметр
+    onDevToolsClick: () -> Unit = {}, // <-- Новый параметр
     onLogoutClick: () -> Unit = {}, // <-- Новый параметр для выхода
     onShowSnackbar: (String) -> Unit = {}
 ) {
-    val context = LocalContext.current // <-- Нужен контекст для вызова email
+    val context = LocalContext.current
 
     val profileClickAction = if (isGuestUser) {
         { onShowSnackbar("Зарегистрируйтесь, чтобы получить возможность настройки профиля") }
@@ -153,6 +155,23 @@ fun MoreScreen(
                         // onSupportClick() // <-- Можно вызвать, если нужно
                     }
             )
+
+            // --- КНОПКА "ДЛЯ РАЗРАБОТЧИКОВ" ---
+            if (isAdminUser) {
+                ListItem(
+                    headlineContent = { Text("Для разработчиков") },
+                    leadingContent = {
+                        Icon(
+                            imageVector = Icons.Default.Build, // <-- Иконка "инструменты"
+                            contentDescription = "Для разработчиков"
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onDevToolsClick() } // <-- Новый колбэк
+                )
+            }
+            // --- /КНОПКА "ДЛЯ РАЗРАБОТЧИКОВ" ---
         }
 
         // --- КНОПКА "ВЫХОД" ---

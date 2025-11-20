@@ -1,3 +1,4 @@
+// HomeScreen.kt
 package com.example.plantcare.ui.screens
 
 import androidx.compose.foundation.Image
@@ -26,13 +27,13 @@ import com.example.plantcare.PlantCareApplication
 import com.example.plantcare.data.getCurrentUserId
 import com.example.plantcare.data.getUserName
 import com.example.plantcare.data.database.entity.Plant
+import com.example.plantcare.util.PlantMoodUtil
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun HomeScreen(
     onAddPlantClick: () -> Unit = {},
     onPlantClick: (Long) -> Unit = {},
-    // Убран параметр onReturnToOnboarding
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -58,42 +59,36 @@ fun HomeScreen(
         )
 
         val userId = context.getCurrentUserId()
-        val plants = remember { mutableStateListOf<Plant>() }
+        val plantsWithMoods = remember { mutableStateListOf<Pair<Plant, String>>() } // <-- Новое состояние
 
         LaunchedEffect(userId) {
             val app = context.applicationContext as PlantCareApplication
-            app.database.plantCareDao()
-                .getPlantsByUser(userId)
-                .collectLatest { list ->
-                    plants.clear()
-                    plants.addAll(list)
+            val dao = app.database.plantCareDao()
+
+            dao.getPlantsByUser(userId).collectLatest { plantList ->
+                val updatedList = plantList.map { plant ->
+                    val events = dao.getUpcomingCareEvents(plant.id) // Получаем события ухода
+                    val mood = PlantMoodUtil.getMood(events) // <-- Вычисляем смайлик
+                    Pair(plant, mood) // <-- Сохраняем пару (растение, смайлик)
                 }
+                plantsWithMoods.clear()
+                plantsWithMoods.addAll(updatedList)
+            }
         }
 
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.weight(1f)
         ) {
-            items(plants.size) { index ->
-                val plant = plants[index]
+            items(plantsWithMoods.size) { index ->
+                val (plant, mood) = plantsWithMoods[index] // <-- Извлекаем растение и смайлик
                 PlantCard(
                     plant = plant,
-                    mood = "🙂", // ← временно фиксированный смайлик
+                    mood = mood, // <-- Передаём актуальный смайлик
                     onClick = { onPlantClick(plant.id) }
                 )
             }
         }
-
-        // 🔴 КНОПКА УДАЛЕНА
-        // OutlinedButton(
-        //     onClick = onReturnToOnboarding,
-        //     modifier = Modifier
-        //         .fillMaxWidth()
-        //         .padding(bottom = 8.dp),
-        //     shape = RoundedCornerShape(8.dp)
-        // ) {
-        //     Text("Вернуться к входу (тест)", style = MaterialTheme.typography.labelMedium)
-        // }
 
         Button(
             onClick = onAddPlantClick,
@@ -110,7 +105,7 @@ fun HomeScreen(
 @Composable
 private fun PlantCard(
     plant: Plant,
-    mood: String,
+    mood: String, // <-- Теперь принимаем смайлик
     onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {

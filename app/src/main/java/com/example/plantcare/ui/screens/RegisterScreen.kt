@@ -1,4 +1,4 @@
-// ui/screens/RegisterScreen.kt
+// RegisterScreen.kt
 package com.example.plantcare.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
@@ -30,7 +30,9 @@ import com.example.plantcare.PlantCareApplication
 import com.example.plantcare.data.PasswordUtils
 import com.example.plantcare.data.database.entity.User
 import com.example.plantcare.data.saveCurrentUserId
+import com.example.plantcare.data.saveIsGuest
 import com.example.plantcare.data.saveOnboardingCompleted
+import com.example.plantcare.data.saveUserRole
 import com.example.plantcare.data.saveUserName
 import kotlinx.coroutines.launch
 
@@ -120,6 +122,8 @@ fun RegisterScreen(
                     context.saveCurrentUserId(userId)
                     context.saveUserName(newUser.login)
                     context.saveOnboardingCompleted(true)
+                    context.saveIsGuest(false) // <-- Не гость
+                    context.saveUserRole(false) // <-- Не админ
                     onRegisterSuccess(newUser.login, false, false) // <-- Не гость, не админ
                 }
             },
@@ -140,6 +144,8 @@ fun RegisterScreen(
                 context.saveCurrentUserId(-1) // -1 = гость
                 context.saveUserName("Гость")
                 context.saveOnboardingCompleted(true)
+                context.saveIsGuest(true) // <-- Сохраняем, что это гость
+                context.saveUserRole(false) // <-- Гость не админ
                 onRegisterSuccess("Гость", true, false) // <-- Гость, не админ
             }
         ) {

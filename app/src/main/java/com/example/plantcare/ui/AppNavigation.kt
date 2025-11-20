@@ -1,3 +1,4 @@
+// AppNavigation.kt
 package com.example.plantcare.ui
 
 import androidx.compose.foundation.layout.Arrangement
@@ -22,10 +23,11 @@ fun AppNavigation(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var onboardingCompleted by remember { mutableStateOf(context.isOnboardingCompleted()) }
 
-    // Состояния пользователя
-    var isGuestUser by remember { mutableStateOf(false) } // по умолчанию не гость
-    var isAdminUser by remember { mutableStateOf(false) } // по умолчанию не админ
-    var userName by remember { mutableStateOf("") }       // по умолчанию пустое имя
+    // --- Состояния пользователя: читаем из SharedPreferences при запуске ---
+    var isGuestUser by remember { mutableStateOf(context.getIsGuest()) }
+    var isAdminUser by remember { mutableStateOf(context.getUserRole()) }
+    var userName by remember { mutableStateOf(context.getUserName()) }
+    // ---
 
     // --- Новые состояния для темы, шрифта, цвета и размера ---
     var isDarkTheme by remember { mutableStateOf(context.isDarkThemeEnabled()) }
@@ -40,6 +42,12 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         selectedFontFamilyName = context.getSelectedFontFamily()
         colorThemeName = context.getColorTheme()
         fontSizeMultiplier = context.getFontSize() / 16f // <-- Нормализуем к 16sp
+
+        // --- Восстанавливаем состояние пользователя ---
+        isGuestUser = context.getIsGuest()
+        isAdminUser = context.getUserRole()
+        userName = context.getUserName()
+        // ---
     }
 
     var currentDestination by remember { mutableStateOf<AppDestination>(
@@ -112,6 +120,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                                 onAboutClick = { currentDestination = AppDestination.AboutApp },
                                 onThemeSettingsClick = { currentDestination = AppDestination.ThemeSettings },
                                 onSupportClick = { /* Можно оставить пустым, если не нужно */ }, // <-- Добавлен
+                                onDevToolsClick = { currentDestination = AppDestination.DevTools }, // <-- Новый параметр
                                 onLogoutClick = {
                                     context.saveOnboardingCompleted(false)
                                     onboardingCompleted = false
@@ -134,6 +143,11 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                                 isGuestUser = isGuest          // <-- Обновляем состояние гостя
                                 isAdminUser = isAdmin          // <-- Обновляем состояние админа
                                 userName = if (isGuest) "Гость" else login // <-- Обновляем имя
+                                // --- Сохраняем в SharedPreferences ---
+                                context.saveIsGuest(isGuest)
+                                context.saveUserRole(isAdmin)
+                                context.saveUserName(userName)
+                                // ---
                                 currentDestination = AppDestination.BottomNavHome
                             }
                         )
@@ -146,6 +160,11 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                                 isGuestUser = false          // <-- Обновляем состояние (не гость)
                                 isAdminUser = isAdmin        // <-- Обновляем состояние админа
                                 userName = login             // <-- Обновляем имя
+                                // --- Сохраняем в SharedPreferences ---
+                                context.saveIsGuest(false)
+                                context.saveUserRole(isAdmin)
+                                context.saveUserName(login)
+                                // ---
                                 currentDestination = AppDestination.BottomNavHome
                             }
                         )
@@ -232,6 +251,11 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                             onBackClick = { currentDestination = AppDestination.BottomNavMore }
                         )
                     }
+                    is AppDestination.DevTools -> { // <-- Новый экран: Для разработчиков
+                        DevToolsScreen(
+                            onBackClick = { currentDestination = AppDestination.BottomNavMore }
+                        )
+                    }
                     else -> {
                         // Можно добавить отображение ошибки или заглушку
                     }
@@ -252,6 +276,7 @@ sealed interface AppDestination {
     object Profile : AppDestination
     object ThemeSettings : AppDestination
     object AboutApp : AppDestination // <-- Добавлено!
+    object DevTools : AppDestination // <-- Новый элемент
     data class PlantDetail(val plantId: Long) : AppDestination
     data class EditPlant(val plantId: Long) : AppDestination
     data class FullScreenPhoto(

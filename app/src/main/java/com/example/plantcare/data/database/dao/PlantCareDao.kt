@@ -100,4 +100,16 @@ interface PlantCareDao {
 
     @Query("SELECT * FROM encyclopedia WHERE name = :typeName LIMIT 1") // <-- Правильное имя таблицы
     suspend fun getEncyclopediaEntryByTypeName(typeName: String): EncyclopediaEntry?
+
+    @Query("SELECT * FROM care_events WHERE datePlanned BETWEEN :start AND :end ORDER BY datePlanned ASC")
+    suspend fun getUpcomingCareEventsForPeriod(start: Long, end: Long): List<CareEvent>
+
+    @Query("SELECT * FROM care_events WHERE plantId = :plantId AND type = :type LIMIT 1")
+    suspend fun getCareEventsByPlantAndType(plantId: Long, type: String): List<CareEvent>
+
+    @Query("SELECT * FROM plants WHERE name = :name AND userId = :userId LIMIT 1")
+    suspend fun getPlantByNameAndUserId(name: String, userId: Long): Plant?
+
+
+
 }
