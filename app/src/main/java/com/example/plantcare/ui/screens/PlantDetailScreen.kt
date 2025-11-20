@@ -1,4 +1,3 @@
-// PlantDetailScreen.kt
 package com.example.plantcare.ui.screens
 
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -24,7 +23,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.example.plantcare.PlantCareApplication
 import com.example.plantcare.data.database.entity.CareEvent
@@ -78,7 +76,7 @@ fun PlantDetailScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Растение не найдено")
+            Text("Растение не найдено", style = MaterialTheme.typography.headlineMedium)
             Button(onClick = onBack) { Text("Назад") }
         }
         return
@@ -118,30 +116,30 @@ fun PlantDetailScreen(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        Text("Детали растения", fontSize = 24.sp, modifier = Modifier.padding(bottom = 16.dp))
-        Text("Название: ${p.name}", fontSize = 18.sp)
-        Text("Тип: ${p.type}", fontSize = 16.sp, modifier = Modifier.padding(top = 4.dp))
-        Text("Комната: ${p.room}", fontSize = 16.sp, modifier = Modifier.padding(top = 4.dp))
+        Text("Детали растения", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.padding(bottom = 16.dp))
+        Text("Название: ${p.name}", style = MaterialTheme.typography.titleLarge)
+        Text("Тип: ${p.type}", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 4.dp))
+        Text("Комната: ${p.room}", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 4.dp))
 
         // Смайлик настроения
         val mood = PlantMood.getMood(careEvents)
-        Text("Состояние: $mood", fontSize = 20.sp, modifier = Modifier.padding(top = 8.dp))
+        Text("Состояние: $mood", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 8.dp))
 
-        Text("Добавлено: ${formatDate(p.createdAt)}", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+        Text("Добавлено: ${formatDate(p.createdAt)}", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
 
         // --- Отображение информации из энциклопедии ---
         encyclopediaEntry?.let { entry ->
             Spacer(modifier = Modifier.height(16.dp))
             Divider(modifier = Modifier.padding(vertical = 8.dp))
-            Text("Информация из энциклопедии:", fontSize = 18.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            Text("Информация из энциклопедии:", style = MaterialTheme.typography.titleMedium)
 
-            Text("Правила ухода: ${entry.careRules}", fontSize = 16.sp, modifier = Modifier.padding(top = 4.dp))
-            Text("Советы по климату: ${entry.climateTips}", fontSize = 16.sp, modifier = Modifier.padding(top = 4.dp))
+            Text("Правила ухода: ${entry.careRules}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
+            Text("Советы по климату: ${entry.climateTips}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
         }
         // --- /Отображение информации из энциклопедии ---
 
         // Фото-история
-        Text("Фото-история:", fontSize = 18.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, modifier = Modifier.padding(top = 20.dp))
+        Text("Фото-история:", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 20.dp))
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -215,7 +213,7 @@ fun PlantDetailScreen(
         }
 
         // Ближайший уход
-        Text("Ближайший уход:", fontSize = 18.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, modifier = Modifier.padding(top = 20.dp))
+        Text("Ближайший уход:", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 20.dp))
 
         // Полив
         if (wateringEvent != null) {
@@ -231,7 +229,8 @@ fun PlantDetailScreen(
                     "Полив просрочен на $overdueDays $overdueWord ($dateStr)"
                 }
             }
-            Text(wateringText, color = if (days < 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
+            // --- Используем только primary цвет для текста ---
+            Text(wateringText, color = MaterialTheme.colorScheme.onSurface)
 
             // Кнопка "Полито"
             Button(
@@ -266,7 +265,8 @@ fun PlantDetailScreen(
                     "Удобрение просрочено на $overdueDays $overdueWord ($dateStr)"
                 }
             }
-            Text(fertilizingText, color = if (days < 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary)
+            // --- Используем только primary цвет для текста ---
+            Text(fertilizingText, color = MaterialTheme.colorScheme.onSurface)
 
             // Кнопка "Удобрено"
             Button(
@@ -281,10 +281,9 @@ fun PlantDetailScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                    .padding(top = 8.dp)
             ) {
-                Text("Удобрено", color = MaterialTheme.colorScheme.onSecondary)
+                Text("Удобрено")
             }
         }
 
