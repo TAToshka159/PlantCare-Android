@@ -1,4 +1,3 @@
-// AppNavigation.kt
 package com.example.plantcare.ui
 
 import androidx.compose.foundation.layout.Arrangement
@@ -12,10 +11,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import com.example.plantcare.data.isOnboardingCompleted
-import com.example.plantcare.data.saveOnboardingCompleted
+import com.example.plantcare.data.*
 import com.example.plantcare.ui.screens.*
+import com.example.plantcare.ui.theme.PlantCareTheme
 
 @Composable
 fun AppNavigation(modifier: Modifier = Modifier) {
@@ -27,147 +27,206 @@ fun AppNavigation(modifier: Modifier = Modifier) {
     var isAdminUser by remember { mutableStateOf(false) } // по умолчанию не админ
     var userName by remember { mutableStateOf("") }       // по умолчанию пустое имя
 
+    // --- Новые состояния для темы, шрифта, цвета и размера ---
+    var isDarkTheme by remember { mutableStateOf(context.isDarkThemeEnabled()) }
+    var selectedFontFamilyName by remember { mutableStateOf(context.getSelectedFontFamily()) }
+    var colorThemeName by remember { mutableStateOf(context.getColorTheme()) }
+    var fontSizeMultiplier by remember { mutableStateOf(context.getFontSize() / 16f) } // <-- Нормализуем к 16sp
+    // ---
+
     LaunchedEffect(Unit) {
         onboardingCompleted = context.isOnboardingCompleted()
+        isDarkTheme = context.isDarkThemeEnabled()
+        selectedFontFamilyName = context.getSelectedFontFamily()
+        colorThemeName = context.getColorTheme()
+        fontSizeMultiplier = context.getFontSize() / 16f // <-- Нормализуем к 16sp
     }
 
     var currentDestination by remember { mutableStateOf<AppDestination>(
         if (onboardingCompleted) AppDestination.BottomNavHome else AppDestination.OnboardingRegister
     ) }
 
-    // --- Основной экран с нижней навигацией ---
-    if (currentDestination is AppDestination.BottomNavHome ||
-        currentDestination is AppDestination.BottomNavEncyclopedia ||
-        currentDestination is AppDestination.BottomNavMore) {
+    // --- Оборачиваем всё в PlantCareTheme с динамическими параметрами ---
+    PlantCareTheme(
+        darkTheme = isDarkTheme,
+        colorThemeName = colorThemeName,
+        fontSizeMultiplier = fontSizeMultiplier,
+        selectedFontFamilyName = selectedFontFamilyName // <-- Исправлено: добавлен параметр
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            // --- Основной экран с нижней навигацией ---
+            if (currentDestination is AppDestination.BottomNavHome ||
+                currentDestination is AppDestination.BottomNavEncyclopedia ||
+                currentDestination is AppDestination.BottomNavMore) {
 
-        val currentTab = when (currentDestination) {
-            is AppDestination.BottomNavHome -> BottomTab.Home
-            is AppDestination.BottomNavEncyclopedia -> BottomTab.Encyclopedia
-            is AppDestination.BottomNavMore -> BottomTab.More
-            else -> BottomTab.Home // Резервное значение
-        }
-
-        Scaffold(
-            bottomBar = {
-                NavigationBar {
-                    BottomTab.entries.forEach { tab ->
-                        NavigationBarItem(
-                            icon = { Icon(tab.icon, contentDescription = tab.label) },
-                            label = { Text(tab.label) },
-                            selected = currentTab == tab,
-                            onClick = { currentDestination = tab.destination }
-                        )
-                    }
+                val currentTab = when (currentDestination) {
+                    is AppDestination.BottomNavHome -> BottomTab.Home
+                    is AppDestination.BottomNavEncyclopedia -> BottomTab.Encyclopedia
+                    is AppDestination.BottomNavMore -> BottomTab.More
+                    else -> BottomTab.Home // Резервное значение
                 }
-            }
-        ) { padding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-            ) {
-                when (currentTab) {
-                    BottomTab.Home -> HomeScreen(
-                        onAddPlantClick = { currentDestination = AppDestination.AddPlant },
-                        onPlantClick = { plantId ->
-                            currentDestination = AppDestination.PlantDetail(plantId)
-                        },
-                        onReturnToOnboarding = {
-                            context.saveOnboardingCompleted(false)
-                            onboardingCompleted = false
-                            currentDestination = AppDestination.OnboardingRegister
-                        },
-                        modifier = modifier
-                    )
-                    BottomTab.Encyclopedia -> EncyclopediaScreen(
-                        onPlantClick = { entry ->
-                            currentDestination = AppDestination.EncyclopediaPlantDetail(entry)
+
+                Scaffold(
+                    bottomBar = {
+                        NavigationBar {
+                            BottomTab.entries.forEach { tab ->
+                                NavigationBarItem(
+                                    icon = { Icon(tab.icon, contentDescription = tab.label) },
+                                    label = { Text(tab.label) },
+                                    selected = currentTab == tab,
+                                    onClick = { currentDestination = tab.destination }
+                                )
+                            }
                         }
-                    )
-                    BottomTab.More -> MoreScreen(
-                        isGuestUser = isGuestUser,
-                        isAdminUser = isAdminUser,
-                        userName = userName,
-                        onProfileClick = { /* TODO: реализуй переход к профилю или оставь пустым */ },
-                        onSettingsClick = { /* TODO: добавь переход к настройкам */ },
-                        onAboutClick = { /* TODO: добавь переход к "О приложении" */ },
-                        onShowSnackbar = { message -> /* TODO: реализуй отображение сообщения */ }
-                    )
+                    }
+                ) { padding ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(padding)
+                    ) {
+                        when (currentTab) {
+                            BottomTab.Home -> HomeScreen(
+                                onAddPlantClick = { currentDestination = AppDestination.AddPlant },
+                                onPlantClick = { plantId ->
+                                    currentDestination = AppDestination.PlantDetail(plantId)
+                                },
+                                onReturnToOnboarding = {
+                                    context.saveOnboardingCompleted(false)
+                                    onboardingCompleted = false
+                                    currentDestination = AppDestination.OnboardingRegister
+                                },
+                                modifier = modifier
+                            )
+                            BottomTab.Encyclopedia -> EncyclopediaScreen(
+                                onPlantClick = { entry ->
+                                    currentDestination = AppDestination.EncyclopediaPlantDetail(entry)
+                                }
+                            )
+                            BottomTab.More -> MoreScreen(
+                                isGuestUser = isGuestUser,
+                                isAdminUser = isAdminUser,
+                                userName = userName,
+                                onProfileClick = { /* TODO: реализуй переход к профилю или оставь пустым */ },
+                                onSettingsClick = { /* TODO: добавь переход к настройкам */ },
+                                onAboutClick = { /* TODO: добавь переход к "О приложении" */ },
+                                onThemeSettingsClick = { currentDestination = AppDestination.ThemeSettings },
+                                onShowSnackbar = { message -> /* TODO: реализуй отображение сообщения */ }
+                            )
+                        }
+                    }
                 }
             }
-        }
-    }
-    // --- Экраны, не связанные с вкладками ---
-    else {
-        when (currentDestination) {
-            is AppDestination.OnboardingRegister -> {
-                RegisterScreen(
-                    onNavigateToLogin = { currentDestination = AppDestination.OnboardingLogin },
-                    onRegisterSuccess = { login, isGuest, isAdmin ->
-                        onboardingCompleted = true
-                        isGuestUser = isGuest          // <-- Обновляем состояние гостя
-                        isAdminUser = isAdmin          // <-- Обновляем состояние админа
-                        userName = if (isGuest) "Гость" else login // <-- Обновляем имя
-                        currentDestination = AppDestination.BottomNavHome
-                    }
-                )
-            }
-            is AppDestination.OnboardingLogin -> {
-                LoginScreen(
-                    onNavigateToRegister = { currentDestination = AppDestination.OnboardingRegister },
-                    onLoginSuccess = { login, isAdmin ->
-                        onboardingCompleted = true
-                        isGuestUser = false          // <-- Обновляем состояние (не гость)
-                        isAdminUser = isAdmin        // <-- Обновляем состояние админа
-                        userName = login             // <-- Обновляем имя
-                        currentDestination = AppDestination.BottomNavHome
-                    }
-                )
-            }
-            is AppDestination.AddPlant -> {
-                AddPlantScreen(
-                    onPlantAdded = { currentDestination = AppDestination.BottomNavHome }
-                )
-            }
-            is AppDestination.PlantDetail -> {
-                val plantId = (currentDestination as AppDestination.PlantDetail).plantId
-                PlantDetailScreen(
-                    plantId = plantId,
-                    onBack = { currentDestination = AppDestination.BottomNavHome },
-                    onEdit = { currentDestination = AppDestination.EditPlant(plantId) },
-                    onPhotoClick = { photoUris, index ->
-                        currentDestination = AppDestination.FullScreenPhoto(
-                            plantId = plantId,
-                            photoUris = photoUris,
-                            initialPage = index
+            // --- Экраны, не связанные с вкладками ---
+            else {
+                when (currentDestination) {
+                    is AppDestination.OnboardingRegister -> {
+                        RegisterScreen(
+                            onNavigateToLogin = { currentDestination = AppDestination.OnboardingLogin },
+                            onRegisterSuccess = { login, isGuest, isAdmin ->
+                                onboardingCompleted = true
+                                isGuestUser = isGuest          // <-- Обновляем состояние гостя
+                                isAdminUser = isAdmin          // <-- Обновляем состояние админа
+                                userName = if (isGuest) "Гость" else login // <-- Обновляем имя
+                                currentDestination = AppDestination.BottomNavHome
+                            }
                         )
                     }
-                )
-            }
-            is AppDestination.EditPlant -> {
-                val plantId = (currentDestination as AppDestination.EditPlant).plantId
-                EditPlantScreen(
-                    plantId = plantId,
-                    onPlantUpdated = { currentDestination = AppDestination.BottomNavHome }
-                )
-            }
-            is AppDestination.FullScreenPhoto -> {
-                val dest = currentDestination as AppDestination.FullScreenPhoto
-                FullScreenPhotoScreen(
-                    photoUris = dest.photoUris,
-                    initialPage = dest.initialPage,
-                    onBack = { currentDestination = AppDestination.PlantDetail(dest.plantId) }
-                )
-            }
-            is AppDestination.EncyclopediaPlantDetail -> {
-                val entry = (currentDestination as AppDestination.EncyclopediaPlantDetail).entry
-                EncyclopediaPlantDetailScreen(
-                    entry = entry,
-                    onBack = { currentDestination = AppDestination.BottomNavEncyclopedia }
-                )
-            }
-            else -> {
-                // Можно добавить отображение ошибки или заглушку
+                    is AppDestination.OnboardingLogin -> {
+                        LoginScreen(
+                            onNavigateToRegister = { currentDestination = AppDestination.OnboardingRegister },
+                            onLoginSuccess = { login, isAdmin ->
+                                onboardingCompleted = true
+                                isGuestUser = false          // <-- Обновляем состояние (не гость)
+                                isAdminUser = isAdmin        // <-- Обновляем состояние админа
+                                userName = login             // <-- Обновляем имя
+                                currentDestination = AppDestination.BottomNavHome
+                            }
+                        )
+                    }
+                    is AppDestination.AddPlant -> {
+                        AddPlantScreen(
+                            onPlantAdded = { currentDestination = AppDestination.BottomNavHome }
+                        )
+                    }
+                    is AppDestination.PlantDetail -> {
+                        val plantId = (currentDestination as AppDestination.PlantDetail).plantId
+                        PlantDetailScreen(
+                            plantId = plantId,
+                            onBack = { currentDestination = AppDestination.BottomNavHome },
+                            onEdit = { currentDestination = AppDestination.EditPlant(plantId) },
+                            onPhotoClick = { photoUris, index ->
+                                currentDestination = AppDestination.FullScreenPhoto(
+                                    plantId = plantId,
+                                    photoUris = photoUris,
+                                    initialPage = index
+                                )
+                            }
+                        )
+                    }
+                    is AppDestination.EditPlant -> {
+                        val plantId = (currentDestination as AppDestination.EditPlant).plantId
+                        EditPlantScreen(
+                            plantId = plantId,
+                            onPlantUpdated = { currentDestination = AppDestination.BottomNavHome }
+                        )
+                    }
+                    is AppDestination.FullScreenPhoto -> {
+                        val dest = currentDestination as AppDestination.FullScreenPhoto
+                        FullScreenPhotoScreen(
+                            photoUris = dest.photoUris,
+                            initialPage = dest.initialPage,
+                            onBack = { currentDestination = AppDestination.PlantDetail(dest.plantId) }
+                        )
+                    }
+                    is AppDestination.EncyclopediaPlantDetail -> {
+                        val entry = (currentDestination as AppDestination.EncyclopediaPlantDetail).entry
+                        EncyclopediaPlantDetailScreen(
+                            entry = entry,
+                            onBack = { currentDestination = AppDestination.BottomNavEncyclopedia }
+                        )
+                    }
+                    is AppDestination.ThemeSettings -> { // <-- Новый экран
+                        ThemeSettingsScreen(
+                            isDarkTheme = isDarkTheme,
+                            onDarkThemeToggle = { enabled ->
+                                isDarkTheme = enabled
+                                context.saveDarkThemeEnabled(enabled)
+                            },
+                            currentFontName = selectedFontFamilyName,
+                            onFontChange = { fontFamily ->
+                                val fontFamilyName = when (fontFamily) {
+                                    FontFamily.Default -> "Default"
+                                    FontFamily.SansSerif -> "SansSerif"
+                                    FontFamily.Serif -> "Serif"
+                                    FontFamily.Monospace -> "Monospace"
+                                    else -> "Default"
+                                }
+                                selectedFontFamilyName = fontFamilyName
+                                context.saveSelectedFontFamily(fontFamilyName)
+                            },
+                            currentColorTheme = colorThemeName,
+                            onColorThemeChange = { theme ->
+                                colorThemeName = theme
+                                context.saveColorTheme(theme)
+                            },
+                            currentFontSize = fontSizeMultiplier,
+                            onFontSizeChange = { size ->
+                                fontSizeMultiplier = size
+                                val normalizedSize = size * 16f // <-- Возвращаем к нормальному размеру
+                                context.saveFontSize(normalizedSize)
+                            },
+                            onBackClick = { currentDestination = AppDestination.BottomNavMore },
+                            onShowSnackbar = { message -> /* TODO */ }
+                        )
+                    }
+                    else -> {
+                        // Можно добавить отображение ошибки или заглушку
+                    }
+                }
             }
         }
     }
@@ -182,6 +241,7 @@ private sealed interface AppDestination {
     object BottomNavMore : AppDestination
     object AddPlant : AppDestination
     object Profile : AppDestination
+    object ThemeSettings : AppDestination // <-- Новый элемент
     data class PlantDetail(val plantId: Long) : AppDestination
     data class EditPlant(val plantId: Long) : AppDestination
     data class FullScreenPhoto(

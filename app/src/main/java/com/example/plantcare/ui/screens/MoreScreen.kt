@@ -1,4 +1,3 @@
-// ui/screens/MoreScreen.kt
 package com.example.plantcare.ui.screens
 
 import androidx.compose.foundation.clickable
@@ -19,8 +18,9 @@ fun MoreScreen(
     isAdminUser: Boolean = false,
     userName: String = "",
     onProfileClick: () -> Unit = {},
-    onSettingsClick: () -> Unit = {},
+    onSettingsClick: () -> Unit = {}, // Оставлен для совместимости, но не используется
     onAboutClick: () -> Unit = {},
+    onThemeSettingsClick: () -> Unit = {}, // <-- Новый параметр
     onShowSnackbar: (String) -> Unit = {}
 ) {
     val profileClickAction = if (isGuestUser) {
@@ -104,18 +104,18 @@ fun MoreScreen(
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Настройки
+            // Настройки - теперь ведёт на ThemeSettings
             ListItem(
-                headlineContent = { Text("Настройки") },
+                headlineContent = { Text("Тема и шрифты") },
                 leadingContent = {
                     Icon(
                         imageVector = Icons.Default.Settings,
-                        contentDescription = "Настройки"
+                        contentDescription = "Тема и шрифты"
                     )
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onSettingsClick() }
+                    .clickable { onThemeSettingsClick() } // <-- Изменено: вызывает новый колбэк
             )
 
             // О приложении
