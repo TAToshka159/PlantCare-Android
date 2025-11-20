@@ -8,7 +8,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.plantcare.util.EmailHelper
 
 @Composable
 fun MoreScreen(
@@ -23,6 +25,8 @@ fun MoreScreen(
     onLogoutClick: () -> Unit = {}, // <-- Новый параметр для выхода
     onShowSnackbar: (String) -> Unit = {}
 ) {
+    val context = LocalContext.current // <-- Нужен контекст для вызова email
+
     val profileClickAction = if (isGuestUser) {
         { onShowSnackbar("Зарегистрируйтесь, чтобы получить возможность настройки профиля") }
     } else {
@@ -92,11 +96,19 @@ fun MoreScreen(
             }
         }
 
-        // --- ГРУППА ОСНОВНЫХ НАСТРОЕК ---
+        Text(
+            text = "Еще",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 24.dp)
+        )
+
+        // Список опций
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Тема и шрифты
+            // Настройки - теперь ведёт на ThemeSettings
             ListItem(
                 headlineContent = { Text("Тема и шрифты") },
                 leadingContent = {
@@ -107,7 +119,7 @@ fun MoreScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onThemeSettingsClick() }
+                    .clickable { onThemeSettingsClick() } // <-- Изменено: вызывает новый колбэк
             )
 
             // О приложении
@@ -135,18 +147,22 @@ fun MoreScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onSupportClick() }
+                    .clickable {
+                        // Вызываем функцию отправки email
+                        EmailHelper.sendSupportEmail(context)
+                        // onSupportClick() // <-- Можно вызвать, если нужно
+                    }
             )
         }
-        // --- /ГРУППА ОСНОВНЫХ НАСТРОЕК ---
 
-        // --- ОТДЕЛЬНАЯ КНОПКА "ВЫХОД" ---
+        // --- КНОПКА "ВЫХОД" ---
         Spacer(modifier = Modifier.height(8.dp)) // <-- Небольшой отступ перед "Выходом"
 
         Button(
             onClick = onLogoutClick,
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .padding(top = 16.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.error,
                 contentColor = MaterialTheme.colorScheme.onError
@@ -154,6 +170,6 @@ fun MoreScreen(
         ) {
             Text("Выход")
         }
-        // --- /ОТДЕЛЬНАЯ КНОПКА "ВЫХОД" ---
+        // --- /КНОПКА "ВЫХОД" ---
     }
 }

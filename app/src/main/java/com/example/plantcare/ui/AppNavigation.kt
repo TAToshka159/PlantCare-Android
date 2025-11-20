@@ -109,9 +109,9 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                                 userName = userName,
                                 onProfileClick = { /* TODO: реализуй переход к профилю или оставь пустым */ },
                                 onSettingsClick = { /* TODO: добавь переход к настройкам */ },
-                                onAboutClick = { currentDestination = AppDestination.AboutApp }, // <-- Передаём навигацию
+                                onAboutClick = { currentDestination = AppDestination.AboutApp },
                                 onThemeSettingsClick = { currentDestination = AppDestination.ThemeSettings },
-                                onSupportClick = { /* TODO: реализуй поддержку */ },
+                                onSupportClick = { /* Можно оставить пустым, если не нужно */ }, // <-- Добавлен
                                 onLogoutClick = {
                                     context.saveOnboardingCompleted(false)
                                     onboardingCompleted = false
