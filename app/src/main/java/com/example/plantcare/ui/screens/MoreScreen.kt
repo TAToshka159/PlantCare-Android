@@ -3,9 +3,7 @@ package com.example.plantcare.ui.screens
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,6 +19,7 @@ fun MoreScreen(
     onSettingsClick: () -> Unit = {}, // Оставлен для совместимости, но не используется
     onAboutClick: () -> Unit = {},
     onThemeSettingsClick: () -> Unit = {}, // <-- Новый параметр
+    onSupportClick: () -> Unit = {}, // <-- Новый параметр
     onLogoutClick: () -> Unit = {}, // <-- Новый параметр для выхода
     onShowSnackbar: (String) -> Unit = {}
 ) {
@@ -93,19 +92,11 @@ fun MoreScreen(
             }
         }
 
-        Text(
-            text = "Еще",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 24.dp)
-        )
-
-        // Список опций
+        // --- ГРУППА ОСНОВНЫХ НАСТРОЕК ---
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Настройки - теперь ведёт на ThemeSettings
+            // Тема и шрифты
             ListItem(
                 headlineContent = { Text("Тема и шрифты") },
                 leadingContent = {
@@ -116,7 +107,7 @@ fun MoreScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onThemeSettingsClick() } // <-- Изменено: вызывает новый колбэк
+                    .clickable { onThemeSettingsClick() }
             )
 
             // О приложении
@@ -132,16 +123,30 @@ fun MoreScreen(
                     .fillMaxWidth()
                     .clickable { onAboutClick() }
             )
-        }
 
-        // --- Кнопка "Выход" внизу ---
-        Spacer(modifier = Modifier.weight(1f))
+            // Поддержка
+            ListItem(
+                headlineContent = { Text("Поддержка") },
+                leadingContent = {
+                    Icon(
+                        imageVector = Icons.Default.Email, // <-- Новая иконка
+                        contentDescription = "Поддержка"
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onSupportClick() }
+            )
+        }
+        // --- /ГРУППА ОСНОВНЫХ НАСТРОЕК ---
+
+        // --- ОТДЕЛЬНАЯ КНОПКА "ВЫХОД" ---
+        Spacer(modifier = Modifier.height(8.dp)) // <-- Небольшой отступ перед "Выходом"
 
         Button(
             onClick = onLogoutClick,
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp),
+                .fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.error,
                 contentColor = MaterialTheme.colorScheme.onError
@@ -149,6 +154,6 @@ fun MoreScreen(
         ) {
             Text("Выход")
         }
-        // --- /Кнопка "Выход" ---
+        // --- /ОТДЕЛЬНАЯ КНОПКА "ВЫХОД" ---
     }
 }

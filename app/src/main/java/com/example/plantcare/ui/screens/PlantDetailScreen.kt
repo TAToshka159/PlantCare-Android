@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.example.plantcare.PlantCareApplication
@@ -173,10 +174,46 @@ fun PlantDetailScreen(
             encyclopediaEntry?.let { entry ->
                 Spacer(modifier = Modifier.height(16.dp))
                 Divider(modifier = Modifier.padding(vertical = 8.dp))
-                Text("Информация из энциклопедии:", style = MaterialTheme.typography.titleMedium)
 
-                Text("Правила ухода: ${entry.careRules}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
-                Text("Советы по климату: ${entry.climateTips}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
+                // Заголовок
+                Text(
+                    text = "Информация из энциклопедии:",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                // Правила ухода
+                Text(
+                    text = "Правила ухода:",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+                Text(
+                    text = entry.careRules,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(start = 8.dp, top = 2.dp)
+                )
+
+                // Большой отступ между разделами
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Советы по климату
+                Text(
+                    text = "Советы по климату:",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+
+                // Парсим и выводим каждую строку
+                parseClimateTips(entry.climateTips).forEach { line ->
+                    Text(
+                        text = line,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(start = 8.dp, top = 2.dp)
+                    )
+                }
             }
             // --- /Отображение информации из энциклопедии ---
 
@@ -341,4 +378,42 @@ private fun daysUntil(futureTimestamp: Long): Int {
     val now = System.currentTimeMillis()
     val diffMillis = futureTimestamp - now
     return (diffMillis / (1000 * 60 * 60 * 24)).toInt()
+}
+
+// Функция для извлечения "Полив" из careRules
+private fun parseCareRules(careRules: String): String {
+    return careRules
+        .split(". ", "; ", "\n").firstOrNull { it.contains("полив", ignoreCase = true) }?.trim() ?: "не указано"
+}
+
+// Функция для разбивки climateTips на строки
+private fun parseClimateTips(climateTips: String): List<String> {
+    val result = mutableListOf<String>()
+
+    // Ищем "Местоположение:"
+    val locationMatch = Regex("(Местоположение:.*?)(?=Температура:|Влажность:|$)", RegexOption.IGNORE_CASE).find(climateTips)
+    if (locationMatch != null) {
+        result.add(locationMatch.groupValues[1].trim())
+    }
+
+    // Ищем "Температура:"
+    val tempMatch = Regex("(Температура:.*?)(?=Влажность:|Местоположение:|$)", RegexOption.IGNORE_CASE).find(climateTips)
+    if (tempMatch != null) {
+        result.add(tempMatch.groupValues[1].trim())
+    }
+
+    // Ищем "Влажность:" (если есть)
+    val humidityMatch = Regex("(Влажность:.*?)(?=Местоположение:|Температура:|$)", RegexOption.IGNORE_CASE).find(climateTips)
+    if (humidityMatch != null) {
+        result.add(humidityMatch.groupValues[1].trim())
+    }
+
+    // Если не удалось распарсить — просто разбиваем по ". "
+    if (result.isEmpty()) {
+        result.addAll(
+            climateTips.split(". ").map { it.trim() }.filter { it.isNotEmpty() }
+        )
+    }
+
+    return result
 }

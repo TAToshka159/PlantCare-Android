@@ -72,16 +72,15 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                 Scaffold(
                     bottomBar = {
                         NavigationBar(
-                            containerColor = MaterialTheme.colorScheme.surface, // <-- Важно!
-                            contentColor = MaterialTheme.colorScheme.onSurface // <-- Важно!
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.onSurface
                         ) {
                             BottomTab.entries.forEach { tab ->
                                 NavigationBarItem(
                                     icon = { Icon(tab.icon, contentDescription = tab.label) },
                                     label = { Text(tab.label) },
                                     selected = currentTab == tab,
-                                    onClick = { currentDestination = tab.destination },
-                                    // Цвет текста и иконки автоматически подхватывается из contentColor
+                                    onClick = { currentDestination = tab.destination }
                                 )
                             }
                         }
@@ -110,8 +109,9 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                                 userName = userName,
                                 onProfileClick = { /* TODO: реализуй переход к профилю или оставь пустым */ },
                                 onSettingsClick = { /* TODO: добавь переход к настройкам */ },
-                                onAboutClick = { /* TODO: добавь переход к "О приложении" */ },
+                                onAboutClick = { currentDestination = AppDestination.AboutApp }, // <-- Передаём навигацию
                                 onThemeSettingsClick = { currentDestination = AppDestination.ThemeSettings },
+                                onSupportClick = { /* TODO: реализуй поддержку */ },
                                 onLogoutClick = {
                                     context.saveOnboardingCompleted(false)
                                     onboardingCompleted = false
@@ -227,6 +227,11 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                             onShowSnackbar = { message -> /* TODO */ }
                         )
                     }
+                    is AppDestination.AboutApp -> { // <-- Новый экран: О приложении
+                        AboutAppScreen(
+                            onBackClick = { currentDestination = AppDestination.BottomNavMore }
+                        )
+                    }
                     else -> {
                         // Можно добавить отображение ошибки или заглушку
                     }
@@ -236,7 +241,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
     }
 }
 
-// Обновленный sealed interface AppDestination
+// Обновлённый sealed interface AppDestination
 sealed interface AppDestination {
     object OnboardingRegister : AppDestination
     object OnboardingLogin : AppDestination
@@ -245,7 +250,8 @@ sealed interface AppDestination {
     object BottomNavMore : AppDestination
     object AddPlant : AppDestination
     object Profile : AppDestination
-    object ThemeSettings : AppDestination // <-- Новый элемент
+    object ThemeSettings : AppDestination
+    object AboutApp : AppDestination // <-- Добавлено!
     data class PlantDetail(val plantId: Long) : AppDestination
     data class EditPlant(val plantId: Long) : AppDestination
     data class FullScreenPhoto(
@@ -256,7 +262,7 @@ sealed interface AppDestination {
     data class EncyclopediaPlantDetail(val entry: com.example.plantcare.data.database.entity.EncyclopediaEntry) : AppDestination
 }
 
-// Обновленный enum класс BottomTab с привязкой к AppDestination
+// Обновлённый enum класс BottomTab с привязкой к AppDestination
 enum class BottomTab(
     val icon: androidx.compose.ui.graphics.vector.ImageVector,
     val label: String,

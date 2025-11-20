@@ -1,3 +1,4 @@
+// PlantCareDao.kt
 package com.example.plantcare.data.database.dao
 
 import androidx.room.*
@@ -26,6 +27,14 @@ interface PlantCareDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertEncyclopediaEntry(entry: EncyclopediaEntry)
 
+    // --- НОВЫЕ функции ---
+    @Query("DELETE FROM encyclopedia")
+    suspend fun deleteAllEncyclopediaEntries()
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAllEncyclopediaEntries(entries: List<EncyclopediaEntry>)
+    // --- /НОВЫЕ функции ---
+
     // Photos
     @Insert
     suspend fun insertPhoto(photo: Photo)
@@ -43,7 +52,6 @@ interface PlantCareDao {
 
     @Query("SELECT * FROM users")
     suspend fun getAllUsers(): List<User>
-
 
     @Query("SELECT * FROM plants WHERE userId = :userId")
     fun getPlantsByUser(userId: Long): Flow<List<Plant>>
@@ -89,7 +97,6 @@ interface PlantCareDao {
 
     @Update
     suspend fun updateCareEvent(event: CareEvent)
-
 
     @Query("SELECT * FROM encyclopedia WHERE name = :typeName LIMIT 1") // <-- Правильное имя таблицы
     suspend fun getEncyclopediaEntryByTypeName(typeName: String): EncyclopediaEntry?
