@@ -30,15 +30,12 @@
 ## 📂 Структура проекта
 
 app/
-├── data/                 # Работа с данными
-│   ├── database/         # Сущности и DAO для Room
-│   └── Preferences.kt    # Сохранение настроек (SharedPreferences)
-│
+├── data/
+│   ├── database/          # Сущности и DAO для Room
+│   └── Preferences.kt     # Сохранение настроек (SharedPreferences)
 ├── ui/
-│   ├── screens/          # Экраны приложения
-│   └── AppNavigation.kt  # Навигация между экранами
-│
-├── util/                 # Вспомогательные утилиты
-│
-├── MainActivity          # Точка входа
+│   ├── screens/           # Экраны приложения
+│   └── AppNavigation.kt   # Навигация между экранами
+├── util/                  # Вспомогательные утилиты
+├── MainActivity.kt        # Точка входа
 └── PlantCareApplication.kt # Инициализация базы данных и WorkManager
