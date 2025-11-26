@@ -296,7 +296,7 @@ fun PlantDetailScreen(
 
             // Полив
             if (wateringEvent != null) {
-                val days = daysUntil(wateringEvent.datePlanned)
+                val days = daysBetweenDates(wateringEvent.datePlanned) // <-- Используем новую функцию
                 val dateStr = formatDate(wateringEvent.datePlanned)
                 val daysWord = PluralUtil.daysUntil(days)
                 val wateringText = when {
@@ -316,7 +316,7 @@ fun PlantDetailScreen(
                     onClick = {
                         coroutineScope.launch {
                             val newDate = System.currentTimeMillis() + (p.wateringInterval * 24L * 60 * 60 * 1000)
-                            val updatedEvent = wateringEvent.copy(datePlanned = newDate)
+                            val updatedEvent = wateringEvent.copy(datePlanned = newDate, dateDone = System.currentTimeMillis())
                             dao.updateCareEvent(updatedEvent)
                             // Обновим список событий
                             careEvents = dao.getUpcomingCareEvents(plantId)
@@ -332,7 +332,7 @@ fun PlantDetailScreen(
 
             // Удобрение
             if (fertilizingEvent != null) {
-                val days = daysUntil(fertilizingEvent.datePlanned)
+                val days = daysBetweenDates(fertilizingEvent.datePlanned) // <-- Используем новую функцию
                 val dateStr = formatDate(fertilizingEvent.datePlanned)
                 val daysWord = PluralUtil.daysUntil(days)
                 val fertilizingText = when {
@@ -352,7 +352,7 @@ fun PlantDetailScreen(
                     onClick = {
                         coroutineScope.launch {
                             val newDate = System.currentTimeMillis() + (p.fertilizingInterval * 24L * 60 * 60 * 1000)
-                            val updatedEvent = fertilizingEvent.copy(datePlanned = newDate)
+                            val updatedEvent = fertilizingEvent.copy(datePlanned = newDate, dateDone = System.currentTimeMillis())
                             dao.updateCareEvent(updatedEvent)
                             // Обновим список событий
                             careEvents = dao.getUpcomingCareEvents(plantId)
@@ -374,11 +374,27 @@ private fun formatDate(timestamp: Long): String {
     return SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date(timestamp))
 }
 
-private fun daysUntil(futureTimestamp: Long): Int {
+// --- НОВАЯ ФУНКЦИЯ ---
+private fun daysBetweenDates(futureTimestamp: Long): Int {
     val now = System.currentTimeMillis()
-    val diffMillis = futureTimestamp - now
-    return (diffMillis / (1000 * 60 * 60 * 24)).toInt()
+    val nowCalendar = Calendar.getInstance().apply { timeInMillis = now }
+    val futureCalendar = Calendar.getInstance().apply { timeInMillis = futureTimestamp }
+
+    // Обнуляем время, чтобы сравнивать только дни
+    nowCalendar.set(Calendar.HOUR_OF_DAY, 0)
+    nowCalendar.set(Calendar.MINUTE, 0)
+    nowCalendar.set(Calendar.SECOND, 0)
+    nowCalendar.set(Calendar.MILLISECOND, 0)
+
+    futureCalendar.set(Calendar.HOUR_OF_DAY, 0)
+    futureCalendar.set(Calendar.MINUTE, 0)
+    futureCalendar.set(Calendar.SECOND, 0)
+    futureCalendar.set(Calendar.MILLISECOND, 0)
+
+    val diffMillis = futureCalendar.timeInMillis - nowCalendar.timeInMillis
+    return (diffMillis / (24 * 60 * 60 * 1000)).toInt()
 }
+// --- /НОВАЯ ФУНКЦИЯ ---
 
 // Функция для извлечения "Полив" из careRules
 private fun parseCareRules(careRules: String): String {
@@ -390,29 +406,38 @@ private fun parseCareRules(careRules: String): String {
 private fun parseClimateTips(climateTips: String): List<String> {
     val result = mutableListOf<String>()
 
-    // Ищем "Местоположение:"
-    val locationMatch = Regex("(Местоположение:.*?)(?=Температура:|Влажность:|$)", RegexOption.IGNORE_CASE).find(climateTips)
-    if (locationMatch != null) {
-        result.add(locationMatch.groupValues[1].trim())
+    if (climateTips.contains("местоположение:", ignoreCase = true)) {
+        val location = climateTips.substringAfter("Местоположение:", "")
+            .substringBefore("Температура:")
+            .trim()
+        if (location.isNotEmpty()) {
+            result.add("Местоположение: $location")
+        }
     }
 
-    // Ищем "Температура:"
-    val tempMatch = Regex("(Температура:.*?)(?=Влажность:|Местоположение:|$)", RegexOption.IGNORE_CASE).find(climateTips)
-    if (tempMatch != null) {
-        result.add(tempMatch.groupValues[1].trim())
+    if (climateTips.contains("температура:", ignoreCase = true)) {
+        val temp = climateTips.substringAfter("Температура:", "")
+            .substringBefore("Влажность:")
+            .substringBefore("Не переносит")
+            .substringBefore("Часто ошибочно")
+            .trim()
+        if (temp.isNotEmpty()) {
+            result.add("Температура: $temp")
+        }
     }
 
-    // Ищем "Влажность:" (если есть)
-    val humidityMatch = Regex("(Влажность:.*?)(?=Местоположение:|Температура:|$)", RegexOption.IGNORE_CASE).find(climateTips)
-    if (humidityMatch != null) {
-        result.add(humidityMatch.groupValues[1].trim())
+    if (climateTips.contains("влажность:", ignoreCase = true)) {
+        val humidity = climateTips.substringAfter("Влажность:", "")
+            .substringBefore("Не переносит")
+            .substringBefore("Часто ошибочно")
+            .trim()
+        if (humidity.isNotEmpty()) {
+            result.add("Влажность: $humidity")
+        }
     }
 
-    // Если не удалось распарсить — просто разбиваем по ". "
     if (result.isEmpty()) {
-        result.addAll(
-            climateTips.split(". ").map { it.trim() }.filter { it.isNotEmpty() }
-        )
+        result.add(climateTips.trim())
     }
 
     return result
